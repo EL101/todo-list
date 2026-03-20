@@ -3,7 +3,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+:root {
+    
+}
 html, body {
     height: 100%;
     width: 100%;
@@ -14,6 +16,65 @@ body {
 
 .sidebar {
     height: 100%;
-    width: 30vw;
-    border: 1px solid blue;
+    width: clamp(200px, 30vw, 300px);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 10px;
+    transition: width 0.3s, padding 0.3s, background-color 0.3s ease-out;
+    position: relative;
+    background-color: rgb(74, 178, 239);
+}
+.sidebar.collapsed {
+    width: 35px;
+    overflow: hidden;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: transparent;
+}
+
+.sidebar-collapse-button {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 3px;
+    width: 5px;
+    height: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid black;
+}
+.sidebar-collapse-button > img {
+    width: 15px;
+    height: 15px;
+}
+.sidebar-collapse-button:hover {
+    background-color: rgba(128, 128, 128, 0.226);
+}
+
+.sidebar-collapse-button:active {
+    background-color: rgba(53, 53, 53, 0.226);
+
+}
+.sidebar-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: opacity 0.3s, gap 0.3s;
+}
+.sidebar.collapsed > .sidebar-sections {
+    opacity: 0;
+    gap: 40px;
+    pointer-events: none;
+}
+.projects-header {
+    display: flex;
+    width: 100%;
+
+}
+
+.collapse-projects-indicator {
+    margin-left: auto;
 }
