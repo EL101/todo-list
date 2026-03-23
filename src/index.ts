@@ -14,3 +14,4 @@ projects_header?.addEventListener("click", e => {
 
 const add_projects_btn = document.querySelector(".add-projects");
 add_projects_btn?.addEventListener("hover", e => e.stopPropagation());
+add_projects_btn?.addEventListener("click", e => e.stopPropagation());
