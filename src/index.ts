@@ -1,4 +1,6 @@
 import "./styles.css"
+import "./sidebar.css"
+import "./main.css"
 
 const sidebar = document.querySelector(".sidebar");
 const sidebar_collapse_button = document.querySelector(".sidebar-collapse-button");

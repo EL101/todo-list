@@ -1,0 +1,15 @@
+:root {
+    --main-bg: rgb(22, 60, 82);
+    --main-text-primary: rgb(245, 235, 220);
+    --main-text-secondary: rgb(195, 185, 165);
+    --main-text-muted: rgba(245, 235, 220, 0.4);
+}
+
+.main {
+    width: 100%;
+    padding: 1rem 2rem;
+}
+
+.title {
+    color: var(--main-text-primary);
+}
