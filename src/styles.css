@@ -4,7 +4,8 @@
     box-sizing: border-box;
 }
 :root {
-    
+    --sidebar-text: rgb(214, 214, 214);
+    --sidebar-bg: rgb(15, 45, 62);
 }
 html, body {
     height: 100%;
@@ -23,7 +24,8 @@ body {
     gap: 10px;
     transition: width 0.3s, padding 0.3s, background-color 0.3s ease-out;
     position: relative;
-    background-color: rgb(74, 178, 239);
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
 }
 
 .sidebar.collapsed {
@@ -38,19 +40,33 @@ body {
     background-color: transparent;
     border: none;
     cursor: pointer;
-    padding: 10px;
+    padding: 3px;
     border-radius: 3px;
-    width: 5px;
-    height: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid black;
+    border: 1px solid var(--sidebar-text);
 }
-.sidebar-collapse-button > img, .collapse-projects-indicator > img {
+
+.sidebar-collapse-button > svg, .collapse-projects-indicator > svg {
     width: 15px;
     height: 15px;
 }
+
+.sidebar-collapse-button > svg path, .collapse-projects-indicator > svg path  {
+    stroke: var(--sidebar-text);
+    fill: var(--sidebar-text);
+}
+
+.sidebar.collapsed .sidebar-collapse-button > svg path, .sidebar.collapsed .collapse-projects-indicator > svg path {
+    stroke: black;
+    fill: black;
+}
+
+.sidebar.collapsed .sidebar-collapse-button {
+    border-color: black;
+}
+
 .sidebar-collapse-button:hover {
     background-color: rgba(128, 128, 128, 0.226);
 }
