@@ -8,8 +8,9 @@ sidebar_collapse_button?.addEventListener("click", e => {
 
 const projects_header = document.querySelector(".projects-header");
 const projects_section = document.querySelector(".projects-section");
-const projects_container = document.querySelector<HTMLDivElement>(".projects-container");
 projects_header?.addEventListener("click", e => {
     projects_section?.classList.toggle("collapsed");
-    
 });
+
+const add_projects_btn = document.querySelector(".add-projects");
+add_projects_btn?.addEventListener("hover", e => e.stopPropagation());
