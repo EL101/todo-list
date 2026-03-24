@@ -17,3 +17,30 @@ projects_header?.addEventListener("click", e => {
 const add_projects_btn = document.querySelector(".add-projects");
 add_projects_btn?.addEventListener("hover", e => e.stopPropagation());
 add_projects_btn?.addEventListener("click", e => e.stopPropagation());
+
+document.querySelectorAll('.task-complete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.closest('.project-task')?.classList.toggle('done');
+    });
+});
+
+document.querySelectorAll('.task-label').forEach(label => {
+    label.addEventListener("click", () => {
+        if (label.previousElementSibling != null) {
+            const btn = label.previousElementSibling as HTMLButtonElement;
+            btn.click();
+        }
+    });
+    label.addEventListener("mouseenter", () => {
+        if (label.previousElementSibling != null) {
+            const btn = label.previousElementSibling as HTMLButtonElement;
+            btn.classList.add("hovered");
+        }
+    });
+    label.addEventListener("mouseleave", () => {
+        if (label.previousElementSibling != null) {
+            const btn = label.previousElementSibling as HTMLButtonElement;
+            btn.classList.remove("hovered");
+        }
+    });
+});
