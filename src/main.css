@@ -19,7 +19,6 @@
 .main-project-container {
     padding-left: 0.5rem;
     width: 100%;
-    margin-bottom: 1rem;
 }
 
 .project-header-main {
@@ -34,6 +33,7 @@
     color: var(--main-text-secondary);
     padding-left: 0.5rem;
     margin-top: 4px;
+    margin-bottom: 1rem;
     display: flex;
     flex-direction: column;
     gap: 4px;

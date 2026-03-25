@@ -25,13 +25,13 @@ add_projects_btn?.addEventListener("click", e => e.stopPropagation());
 
 const project_container = document.querySelector(".main-project-container");
 
-document.querySelectorAll('.task-complete-btn').forEach(btn => {
+function setTaskCompleteBtnEventListeners(btn: HTMLInputElement) {
     btn.addEventListener('click', () => {
         btn.closest('.project-task')?.classList.toggle('done');
     });
-});
+}
 
-document.querySelectorAll('.task-label').forEach(label => {
+function setTaskLabelEventListeners(label: HTMLElement) {
     label.addEventListener("click", () => {
         if (label.previousElementSibling != null) {
             const btn = label.previousElementSibling as HTMLButtonElement;
@@ -52,23 +52,36 @@ document.querySelectorAll('.task-label').forEach(label => {
             label.classList.remove("hovered");
         }
     });
+}
+document.querySelectorAll<HTMLInputElement>('.task-complete-btn').forEach(btn => {
+    setTaskCompleteBtnEventListeners(btn);
+});
+
+document.querySelectorAll<HTMLElement>('.task-label').forEach(label => {
+    setTaskLabelEventListeners(label);
 });
 
 function addProject(projectInfo: project, id:string) {
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
     heading.textContent = projectInfo.title;
+
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
+
     for (const task of projectInfo.tasks) {
         const taskElem = document.createElement("li");
         taskElem.classList.add("project-task");
+
         const btn = document.createElement("button");
         btn.classList.add("task-complete-btn");
+        setTaskCompleteBtnEventListeners(btn as HTMLInputElement);
+
         const label = document.createElement("span");
         label.classList.add("task-label");
         label.textContent = task;
-        // console.log(task);
+        setTaskLabelEventListeners(label as HTMLElement);
+
         taskElem.append(btn, label);
         list.append(taskElem);
     }
@@ -81,10 +94,11 @@ document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEac
         child.addEventListener("click", e => {
             if (!child.checked) {
                 if (project_container?.children) {
+                    const childID = child.parentElement?.dataset.id;
                     const children = Array.from(project_container?.children);
-                    children.filter(elem => elem instanceof HTMLElement && elem.dataset.id === child.dataset.id);
-                    for (let child of children) {
-                        project_container.removeChild(child);
+                    const filtered = children.filter(elem => elem instanceof HTMLElement && elem.dataset.id === childID);
+                    for (let c of filtered) {
+                        project_container.removeChild(c);
                     }
                 }
             } else {
