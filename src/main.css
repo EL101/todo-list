@@ -47,6 +47,7 @@
 
 .task-label {
     cursor: pointer;
+    transition: color 0.2s ease;
 }
 .task-complete-btn {
     width: 12px;
@@ -79,6 +80,9 @@
     background-color: var(--main-accent-subtle);
 }
 
+.task-label.hovered {
+    color: var(--main-text-muted);
+}
 .project-task.done .task-complete-btn {
     background-color: var(--main-accent);
     border-color: var(--main-accent);
