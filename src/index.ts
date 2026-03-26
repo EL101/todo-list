@@ -69,10 +69,11 @@ function addProject(projectInfo: project, id:string) {
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
 
-    for (const task of projectInfo.tasks) {
+    for (let i = 0; i < projectInfo.tasks.length; i++) {
+        const task = projectInfo.tasks[i];
         const taskElem = document.createElement("li");
         taskElem.classList.add("project-task");
-
+        taskElem.dataset.index = "" + i;
         const btn = document.createElement("button");
         btn.classList.add("task-complete-btn");
         setTaskCompleteBtnEventListeners(btn as HTMLInputElement);
