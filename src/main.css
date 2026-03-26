@@ -1,5 +1,7 @@
 :root {
     --main-bg: rgb(22, 60, 82);
+    --main-surface: rgb(28, 72, 98);       
+    --main-surface-hover: rgb(35, 85, 115); 
     --main-text-primary: rgb(245, 235, 220);
     --main-text-secondary: rgb(195, 185, 165);
     --main-text-muted: rgba(245, 235, 220, 0.4);
@@ -43,12 +45,20 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    background-color: var(--main-surface);
+    padding: 2px 8px;
+    border-radius: 5px;
+}
+
+.project-task:hover {
+    background-color: var(--main-surface-hover);
 }
 
 .task-label {
     cursor: pointer;
     transition: color 0.2s ease;
 }
+
 .task-complete-btn {
     width: 12px;
     height: 12px;
@@ -59,20 +69,19 @@
     flex-shrink: 0;
     position: relative;
     transition: border-color 0.2s ease, background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .task-complete-btn::after {
     content: '';
-    position: absolute;
-    display: none;
-    left: 5px;
-    top: 2px;
-    width: 4px;
-    height: 8px;
-    border: 2px solid var(--main-bg);
-    border-top: none;
-    border-left: none;
-    transform: rotate(45deg);
+    width: 7px;
+    height: 7px;
+    background: radial-gradient(black);
+    scale: 0;
+    border-radius: 100%;
+    transition: scale 0.1s ease;
 }
 
 .task-complete-btn.hovered {
@@ -83,16 +92,28 @@
 .task-label.hovered {
     color: var(--main-text-muted);
 }
+
 .project-task.done .task-complete-btn {
     background-color: var(--main-accent);
     border-color: var(--main-accent);
 }
 
 .project-task.done .task-complete-btn::after {
-    display: block;
+    scale: 1;
 }
 
 .project-task.done .task-label {
     text-decoration: line-through;
     color: var(--main-text-muted);
+}
+
+.edit-btn path{
+    fill: var(--main-text-muted);
+}
+
+.edit-btn {
+    width: 15px;
+    height: 15px;
+    margin-left: auto;
+    cursor: pointer;
 }

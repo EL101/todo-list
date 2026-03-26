@@ -2,6 +2,14 @@ import "./styles.css"
 import "./sidebar.css"
 import "./main.css"
 
+const editSVG = `
+<svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M8.56078 20.2501L20.5608 8.25011L15.7501 3.43945L3.75012 15.4395V20.2501H8.56078ZM15.7501 5.56077L18.4395 8.25011L16.5001 10.1895L13.8108 7.50013L15.7501 5.56077ZM12.7501 8.56079L15.4395 11.2501L7.93946 18.7501H5.25012L5.25012 16.0608L12.7501 8.56079Z" fill="#080341"/>
+</svg>
+`
+
+const parser = new DOMParser();
+
 type project = {
     title: string,
     tasks: string[]
@@ -74,6 +82,7 @@ function addProject(projectInfo: project, id:string) {
         const taskElem = document.createElement("li");
         taskElem.classList.add("project-task");
         taskElem.dataset.index = "" + i;
+
         const btn = document.createElement("button");
         btn.classList.add("task-complete-btn");
         setTaskCompleteBtnEventListeners(btn as HTMLInputElement);
@@ -83,7 +92,10 @@ function addProject(projectInfo: project, id:string) {
         label.textContent = task;
         setTaskLabelEventListeners(label as HTMLElement);
 
-        taskElem.append(btn, label);
+        const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
+        editBtn.classList.add("edit-btn");
+
+        taskElem.append(btn, label, editBtn);
         list.append(taskElem);
     }
     heading.dataset.id=id;
