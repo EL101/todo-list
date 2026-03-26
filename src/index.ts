@@ -65,13 +65,13 @@ function setTaskLabelEventListeners(label: HTMLElement) {
         }
     });
 }
-document.querySelectorAll<HTMLInputElement>('.task-complete-btn').forEach(btn => {
-    setTaskCompleteBtnEventListeners(btn);
-});
+// document.querySelectorAll<HTMLInputElement>('.task-complete-btn').forEach(btn => {
+//     setTaskCompleteBtnEventListeners(btn);
+// });
 
-document.querySelectorAll<HTMLElement>('.task-label').forEach(label => {
-    setTaskLabelEventListeners(label);
-});
+// document.querySelectorAll<HTMLElement>('.task-label').forEach(label => {
+//     setTaskLabelEventListeners(label);
+// });
 
 function priorityToStr(priority: 0 | 1 | 2) {
     if (priority === 0) return "Low";
@@ -93,17 +93,21 @@ function addProject(projectInfo: project, id:string) {
         taskElem.classList.add("project-task");
         taskElem.dataset.index = "" + i;
 
+        const labelTagContainer = document.createElement("div");
+        labelTagContainer.classList.add("label-tag-container");
+
+        const btnLabelContainer = document.createElement("div");
+        btnLabelContainer.classList.add("btn-label-container");
+
         const btn = document.createElement("button");
         btn.classList.add("task-complete-btn");
         setTaskCompleteBtnEventListeners(btn as HTMLInputElement);
-
-        const labelTagContainer = document.createElement("div");
-        labelTagContainer.classList.add("label-tag-container");
 
         const label = document.createElement("span");
         label.classList.add("task-label");
         label.textContent = task.name;
         setTaskLabelEventListeners(label as HTMLElement);
+        btnLabelContainer.append(btn, label);
 
         const tags = document.createElement("div");
         tags.classList.add("tags-container");
@@ -117,12 +121,12 @@ function addProject(projectInfo: project, id:string) {
         projectTag.classList.add("project-tag");
         projectTag.textContent = projectInfo.title;
         tags.append(dateTag, priorityTag, projectTag);
-        labelTagContainer.append(label, tags);
+        labelTagContainer.append(btnLabelContainer, tags);
 
         const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
         editBtn.classList.add("edit-btn");
 
-        taskElem.append(btn, labelTagContainer, editBtn);
+        taskElem.append(labelTagContainer, editBtn);
         list.append(taskElem);
     }
     heading.dataset.id=id;

@@ -2,6 +2,7 @@
     --main-bg: rgb(22, 60, 82);
     --main-surface: rgb(28, 72, 98);       
     --main-surface-hover: rgb(35, 85, 115); 
+    --main-surface-muted: rgba(0, 0, 0, 0.15);
     --main-text-primary: rgb(245, 235, 220);
     --main-text-secondary: rgb(195, 185, 165);
     --main-text-muted: rgba(245, 235, 220, 0.4);
@@ -57,11 +58,20 @@
 .label-tag-container {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
 }
+
+.btn-label-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 
 .tags-container {
     display: flex;
     gap: 1rem;
+    padding-left: calc(12px + 4px);
 }
 .task-label {
     cursor: pointer;
@@ -102,6 +112,10 @@
     color: var(--main-text-muted);
 }
 
+.project-task.done {
+    background-color: var(--main-surface-muted);
+    color: var(--main-text-muted);
+}
 .project-task.done .task-complete-btn {
     background-color: var(--main-accent);
     border-color: var(--main-accent);
