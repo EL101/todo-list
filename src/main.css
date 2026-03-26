@@ -54,6 +54,15 @@
     background-color: var(--main-surface-hover);
 }
 
+.label-tag-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.tags-container {
+    display: flex;
+    gap: 1rem;
+}
 .task-label {
     cursor: pointer;
     transition: color 0.2s ease;

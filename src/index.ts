@@ -12,7 +12,11 @@ const parser = new DOMParser();
 
 type project = {
     title: string,
-    tasks: string[]
+    tasks: {
+        name: string,
+        date: string,
+        priority: 0 | 1 | 2,
+    }[]
 };
 
 const sidebar = document.querySelector(".sidebar");
@@ -69,6 +73,12 @@ document.querySelectorAll<HTMLElement>('.task-label').forEach(label => {
     setTaskLabelEventListeners(label);
 });
 
+function priorityToStr(priority: 0 | 1 | 2) {
+    if (priority === 0) return "Low";
+    else if (priority === 1) return "Medium";
+    else return "High";
+}
+
 function addProject(projectInfo: project, id:string) {
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
@@ -87,15 +97,32 @@ function addProject(projectInfo: project, id:string) {
         btn.classList.add("task-complete-btn");
         setTaskCompleteBtnEventListeners(btn as HTMLInputElement);
 
+        const labelTagContainer = document.createElement("div");
+        labelTagContainer.classList.add("label-tag-container");
+
         const label = document.createElement("span");
         label.classList.add("task-label");
-        label.textContent = task;
+        label.textContent = task.name;
         setTaskLabelEventListeners(label as HTMLElement);
+
+        const tags = document.createElement("div");
+        tags.classList.add("tags-container");
+        const dateTag = document.createElement("div");
+        dateTag.classList.add("date-tag")
+        dateTag.textContent = task.date;
+        const priorityTag = document.createElement("div");
+        priorityTag.classList.add("priority-tag");
+        priorityTag.textContent = priorityToStr(task.priority);
+        const projectTag = document.createElement("div");
+        projectTag.classList.add("project-tag");
+        projectTag.textContent = projectInfo.title;
+        tags.append(dateTag, priorityTag, projectTag);
+        labelTagContainer.append(label, tags);
 
         const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
         editBtn.classList.add("edit-btn");
 
-        taskElem.append(btn, label, editBtn);
+        taskElem.append(btn, labelTagContainer, editBtn);
         list.append(taskElem);
     }
     heading.dataset.id=id;

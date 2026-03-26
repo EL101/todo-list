@@ -33,14 +33,14 @@
                     </div>
                 </div>
                 <div class="projects-container">
-                    <h5 class="project-task-header" data-project-info ='{"title": "My Projects 1", "tasks": ["Task 1", "Task 2", "Task 3", "Task 4"]}' data-id="1">
+                    <h5 class="project-task-header" data-project-info ='{"title": "My Projects 1", "tasks": [{"name": "Task 1", "date": "11-20-2027", "priority": 2}, {"name": "Task 2", "date": "11-20-2027", "priority": 2}, {"name": "Task 3", "date": "11-20-2027", "priority": 2}]}' data-id="1">
                         <input type="checkbox" id="project-1" name="project-1">
                         <label for="project-1">My Projects 1</label>
                     </h5>
-                    <h5 class="project-task-header" data-project-info ='{"title": "My Projects 2", "tasks": ["Task asjdjasd", "Task 2123", "Task 3", "Task 4"]}' data-id="2">
+                    <!-- <h5 class="project-task-header" data-project-info ='{"title": "My Projects 2", "tasks": ["Task asjdjasd", "Task 2123", "Task 3", "Task 4"]}' data-id="2">
                         <input type="checkbox" id="project-2" name="project-2">
                         <label for="project-2">My Projects 2</label>
-                    </h5>
+                    </h5> -->
                 </div>
             </div>
         </div>
@@ -53,7 +53,15 @@
                 <li class="project-task">
                     <button class="task-complete-btn"></button>
                     <span class="task-label">Task 1</span>
-                    <
+                    <div class="project-task-tags">
+                        <div class="date-tag"></div>
+                        <div class="priority-tag"></div>
+                        <div class="project-tag"></div>
+                    </div>
+                    <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M8.56078 20.2501L20.5608 8.25011L15.7501 3.43945L3.75012 15.4395V20.2501H8.56078ZM15.7501 5.56077L18.4395 8.25011L16.5001 10.1895L13.8108 7.50013L15.7501 5.56077ZM12.7501 8.56079L15.4395 11.2501L7.93946 18.7501H5.25012L5.25012 16.0608L12.7501 8.56079Z" fill="#080341"/>
+                    </svg>
+                    
                 </li>
                 <li class="project-task">
                     <button class="task-complete-btn"></button>
