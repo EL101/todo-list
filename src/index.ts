@@ -65,6 +65,41 @@ function setTaskLabelEventListeners(label: HTMLElement) {
         }
     });
 }
+
+function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement, elemAfter: HTMLElement) {
+    btn.addEventListener("click", () => {
+        if (btn.dataset.canceled === "false") return;
+        btn.dataset.canceled = "false";
+        const inputContainer = document.createElement("div");
+        inputContainer.classList.add("task-input-container");
+        const nameField = document.createElement("input");
+        nameField.type = "text";
+        nameField.required = true;
+        nameField.placeholder = "Task name";
+        nameField.classList.add("task-name-input");
+        const tagInputContainer = document.createElement("div");
+        tagInputContainer.classList.add("tag-input-container");
+        const datePicker = document.createElement("input");
+        datePicker.classList.add("date-picker");
+        datePicker.type = "date";
+        const priorityPicker = document.createElement("select");
+        priorityPicker.classList.add("priority-picker");
+        tagInputContainer.append(datePicker, priorityPicker);
+
+        const btnContainer = document.createElement("div");
+        btnContainer.classList.add("task-input-btn-container");
+        const submitTaskBtn = document.createElement("button");
+        submitTaskBtn.textContent = "Add Task";
+        submitTaskBtn.classList.add("submit-task-btn");
+        const cancelButton = document.createElement("button");
+        submitTaskBtn.textContent = "Cancel";
+        submitTaskBtn.classList.add("cancel-task-btn");
+        btnContainer.append(submitTaskBtn, cancelButton);
+
+        inputContainer.append(nameField, tagInputContainer, btnContainer);
+        container?.insertBefore(inputContainer, elemAfter);
+    });
+}
 // document.querySelectorAll<HTMLInputElement>('.task-complete-btn').forEach(btn => {
 //     setTaskCompleteBtnEventListeners(btn);
 // });
@@ -137,12 +172,17 @@ function addProject(projectInfo: project, id:string) {
     addTaskContainer.classList.add("add-task-container");
     const addTaskButton = document.createElement("button");
     addTaskButton.classList.add("add-task-button");
-    addTaskButton.dataset.id=id;
+    addTaskButton.id=id;
     addTaskButton.textContent = "+";
+    addTaskButton.dataset.canceled = "true";
+    setAddTaskEventListeners(addTaskButton, projectContainer, addTaskContainer);
+
     const addTaskButtonLabel = document.createElement("label");
     addTaskButtonLabel.classList.add("add-task-label");
     addTaskButtonLabel.htmlFor = id;
     addTaskButtonLabel.textContent = "Add Task";
+    addTaskButtonLabel.addEventListener("click", () => addTaskButton.click());
+
     addTaskContainer.append(addTaskButton, addTaskButtonLabel);
 
     projectContainer.dataset.id = id;
@@ -170,35 +210,3 @@ document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEac
         });
     }
 );
-
-document.querySelectorAll<HTMLButtonElement>(".add-task-button").forEach(btn => {
-    btn.addEventListener("click", () => {
-        const inputContainer = document.createElement("div");
-        inputContainer.classList.add(".task-input-container");
-        const nameField = document.createElement("input");
-        nameField.type = "text";
-        nameField.required = true;
-        nameField.placeholder = "Task name";
-        const tagInputContainer = document.createElement("div");
-        tagInputContainer.classList.add("tag-input-container");
-        const datePicker = document.createElement("input");
-        datePicker.classList.add("date-picker");
-        datePicker.type = "date";
-        const priorityPicker = document.createElement("select");
-        priorityPicker.classList.add("priority-picker");
-        tagInputContainer.append(datePicker, priorityPicker);
-
-        const btnContainer = document.createElement("div");
-        btnContainer.classList.add("task-input-btn-container");
-        const submitTaskBtn = document.createElement("button");
-        submitTaskBtn.textContent = "Add Task";
-        submitTaskBtn.classList.add("submit-task-btn");
-        const cancelButton = document.createElement("button");
-        submitTaskBtn.textContent = "Cancel";
-        submitTaskBtn.classList.add("cancel-task-btn");
-        btnContainer.append(submitTaskBtn, cancelButton);
-
-        inputContainer.append(nameField, tagInputContainer, btnContainer);
-
-    });
-});

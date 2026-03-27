@@ -25,6 +25,10 @@
     width: 100%;
 }
 
+.project-container > :not(:first-child) {
+    margin-left: 0.5rem;
+}
+
 .project-header-main {
     color: var(--main-text-primary);
     font-size: 1rem;
@@ -35,7 +39,6 @@
 .project-task-list {
     list-style-type: none;
     color: var(--main-text-secondary);
-    padding-left: 0.5rem;
     margin-top: 4px;
     display: flex;
     flex-direction: column;
@@ -202,4 +205,31 @@
 .add-task-label {
     color: var(--main-text-secondary);
     cursor: pointer;
+}
+
+.task-input-container {
+    background-color: var(--main-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    margin-top: 4px;
+}
+
+.task-name-input {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1px 4px;
+    color: var(--main-text-secondary);
+    transition: border-bottom 0.2s;
+}
+
+.task-name-input:focus {
+    outline: none;
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+.task-name-input:focus::placeholder {
+    opacity: 0.5;
 }
