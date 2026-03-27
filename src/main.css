@@ -37,7 +37,6 @@
     color: var(--main-text-secondary);
     padding-left: 0.5rem;
     margin-top: 4px;
-    margin-bottom: 1rem;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -173,5 +172,34 @@
     width: 15px;
     height: 15px;
     margin-left: auto;
+    cursor: pointer;
+}
+
+.add-task-container {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 5px;
+    opacity: 0.35;
+    transition: opacity 0.2s;
+}
+.add-task-container:hover {
+    opacity: 0.8;
+}
+.add-task-button {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background-color: transparent;
+    border: none;
+    color: var(--main-text-secondary);
+    cursor: pointer;
+}
+
+.add-task-label {
+    color: var(--main-text-secondary);
     cursor: pointer;
 }

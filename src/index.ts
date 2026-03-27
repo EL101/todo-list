@@ -130,9 +130,22 @@ function addProject(projectInfo: project, id:string) {
         taskElem.append(labelTagContainer, editBtn);
         list.append(taskElem);
     }
+    const addTaskContainer = document.createElement("div");
+    addTaskContainer.classList.add("add-task-container");
+    const addTaskButton = document.createElement("button");
+    addTaskButton.classList.add("add-task-button");
+    addTaskButton.dataset.id=id;
+    addTaskButton.textContent = "+";
+    const addTaskButtonLabel = document.createElement("label");
+    addTaskButtonLabel.classList.add("add-task-label");
+    addTaskButtonLabel.htmlFor = id;
+    addTaskButtonLabel.textContent = "Add Task";
+    addTaskContainer.append(addTaskButton, addTaskButtonLabel);
+
+    addTaskContainer.dataset.id=id;
     heading.dataset.id=id;
     list.dataset.id=id;
-    project_container?.append(heading, list);
+    project_container?.append(heading, list, addTaskContainer);
 }
 
 document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEach(child => {
