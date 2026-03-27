@@ -35,7 +35,7 @@ const add_projects_btn = document.querySelector(".add-projects");
 add_projects_btn?.addEventListener("hover", e => e.stopPropagation());
 add_projects_btn?.addEventListener("click", e => e.stopPropagation());
 
-const project_container = document.querySelector(".main-project-container");
+const mainProjectContainer = document.querySelector(".main-project-container");
 
 function setTaskCompleteBtnEventListeners(btn: HTMLInputElement) {
     btn.addEventListener('click', () => {
@@ -80,6 +80,9 @@ function priorityToStr(priority: 0 | 1 | 2) {
 }
 
 function addProject(projectInfo: project, id:string) {
+    const projectContainer = document.createElement("div");
+    projectContainer.classList.add("project-container");
+    
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
     heading.textContent = projectInfo.title;
@@ -142,21 +145,20 @@ function addProject(projectInfo: project, id:string) {
     addTaskButtonLabel.textContent = "Add Task";
     addTaskContainer.append(addTaskButton, addTaskButtonLabel);
 
-    addTaskContainer.dataset.id=id;
-    heading.dataset.id=id;
-    list.dataset.id=id;
-    project_container?.append(heading, list, addTaskContainer);
+    projectContainer.dataset.id = id;
+    projectContainer.append(heading, list, addTaskContainer);
+    mainProjectContainer?.append(projectContainer);
 }
 
 document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEach(child => {
         child.addEventListener("click", e => {
             if (!child.checked) {
-                if (project_container?.children) {
+                if (mainProjectContainer?.children) {
                     const childID = child.parentElement?.dataset.id;
-                    const children = Array.from(project_container?.children);
+                    const children = Array.from(mainProjectContainer?.children);
                     const filtered = children.filter(elem => elem instanceof HTMLElement && elem.dataset.id === childID);
                     for (let c of filtered) {
-                        project_container.removeChild(c);
+                        mainProjectContainer.removeChild(c);
                     }
                 }
             } else {
@@ -168,3 +170,35 @@ document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEac
         });
     }
 );
+
+document.querySelectorAll<HTMLButtonElement>(".add-task-button").forEach(btn => {
+    btn.addEventListener("click", () => {
+        const inputContainer = document.createElement("div");
+        inputContainer.classList.add(".task-input-container");
+        const nameField = document.createElement("input");
+        nameField.type = "text";
+        nameField.required = true;
+        nameField.placeholder = "Task name";
+        const tagInputContainer = document.createElement("div");
+        tagInputContainer.classList.add("tag-input-container");
+        const datePicker = document.createElement("input");
+        datePicker.classList.add("date-picker");
+        datePicker.type = "date";
+        const priorityPicker = document.createElement("select");
+        priorityPicker.classList.add("priority-picker");
+        tagInputContainer.append(datePicker, priorityPicker);
+
+        const btnContainer = document.createElement("div");
+        btnContainer.classList.add("task-input-btn-container");
+        const submitTaskBtn = document.createElement("button");
+        submitTaskBtn.textContent = "Add Task";
+        submitTaskBtn.classList.add("submit-task-btn");
+        const cancelButton = document.createElement("button");
+        submitTaskBtn.textContent = "Cancel";
+        submitTaskBtn.classList.add("cancel-task-btn");
+        btnContainer.append(submitTaskBtn, cancelButton);
+
+        inputContainer.append(nameField, tagInputContainer, btnContainer);
+
+    });
+});
