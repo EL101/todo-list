@@ -3,6 +3,7 @@
     --main-surface: rgb(28, 72, 98);       
     --main-surface-hover: rgb(35, 85, 115); 
     --main-surface-muted: rgba(0, 0, 0, 0.15);
+
     --main-text-primary: rgb(245, 235, 220);
     --main-text-secondary: rgb(195, 185, 165);
     --main-text-muted: rgba(245, 235, 220, 0.4);
@@ -70,7 +71,7 @@
 
 .tags-container {
     display: flex;
-    gap: 1rem;
+    gap: 8px;
     padding-left: calc(12px + 4px);
 }
 .task-label {
@@ -114,7 +115,8 @@
 
 .project-task.done {
     background-color: var(--main-surface-muted);
-    color: var(--main-text-muted);
+    /* color: var(--main-text-muted); */
+    opacity: 0.4;
 }
 .project-task.done .task-complete-btn {
     background-color: var(--main-accent);
@@ -128,6 +130,39 @@
 .project-task.done .task-label {
     text-decoration: line-through;
     color: var(--main-text-muted);
+}
+
+.tags-container * {
+    padding: 1px 4px;
+    font-size: .8rem;
+}
+
+.date-tag {
+    background-color: rgba(74, 178, 239, 0.15); 
+    border: 1px solid rgba(74, 178, 239, 0.3);
+}
+
+.priority-tag.high {
+    background-color: rgba(239, 100, 90, 0.15);
+    border: 1px solid rgba(239, 100, 90, 0.3);
+    color: rgb(239, 100, 90);
+}
+
+.priority-tag.medium {
+    background-color: rgba(239, 180, 74, 0.15);
+    border: 1px solid rgba(239, 180, 74, 0.3);
+    color: rgb(239, 180, 74);
+}
+
+.priority-tag.low {
+    background-color: rgba(100, 210, 180, 0.15);
+    border: 1px solid rgba(100, 210, 180, 0.3);
+    color: rgb(100, 210, 180);
+}
+
+.project-tag {
+    background-color: rgba(100, 210, 180, 0.15); /* teal */
+    border: 1px solid rgba(100, 210, 180, 0.3);
 }
 
 .edit-btn path{

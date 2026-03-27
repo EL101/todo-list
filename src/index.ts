@@ -117,6 +117,7 @@ function addProject(projectInfo: project, id:string) {
         const priorityTag = document.createElement("div");
         priorityTag.classList.add("priority-tag");
         priorityTag.textContent = priorityToStr(task.priority);
+        priorityTag.classList.add(priorityToStr(task.priority).toLowerCase());
         const projectTag = document.createElement("div");
         projectTag.classList.add("project-tag");
         projectTag.textContent = projectInfo.title;
