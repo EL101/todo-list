@@ -23,3 +23,8 @@ export function addTaskToProject(project: Project, task: Task) {
     project.tasks.push(task);
     return project;
 }
+
+export function removeTaskFromProject(project: Project, index: number) {
+    project.tasks.splice(index, 1);
+    return project;
+}

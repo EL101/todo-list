@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Priority, Project } from "./types";
-import { priorityToStr, parseProjectInfo, strToPriority, addTaskToProject } from "./backend";
+import { priorityToStr, parseProjectInfo, strToPriority, addTaskToProject, removeTaskFromProject } from "./backend";
 
 const editSVG = `
 <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,8 +29,22 @@ add_projects_btn?.addEventListener("click", e => e.stopPropagation());
 
 // ── Task buttons ─────────────────────────────────────────
 export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
+    btn.addEventListener("mouseenter", () => {
+        const task = btn.closest(".project-task");
+        task?.classList.add("hovered");
+    });
+    btn.addEventListener("mouseleave", () => {
+        const task = btn.closest(".project-task");
+        task?.classList.remove("hovered");
+    });
     btn.addEventListener("click", () => {
-        btn.closest(".project-task")?.classList.toggle("done");
+        const task = btn.closest(".project-task") as HTMLElement;
+        const index = parseInt(task.dataset.index as string);
+        const id = btn.closest<HTMLElement>(".project-container")?.dataset.id;
+        const projectHeader = getProjectHeader(id as string);
+        const newProjectInfo = removeTaskFromProject(JSON.parse(projectHeader.dataset.projectInfo as string), index);
+        projectHeader.dataset.projectInfo = JSON.stringify(newProjectInfo);
+        task?.remove();
     });
 }
 
@@ -39,14 +53,12 @@ export function setTaskLabelEventListeners(label: HTMLElement) {
         (label.previousElementSibling as HTMLButtonElement)?.click();
     });
     label.addEventListener("mouseenter", () => {
-        const btn = label.previousElementSibling as HTMLButtonElement;
-        btn?.classList.add("hovered");
-        label.classList.add("hovered");
+        const task = label.closest(".project-task");
+        task?.classList.add("hovered");
     });
     label.addEventListener("mouseleave", () => {
-        const btn = label.previousElementSibling as HTMLButtonElement;
-        btn?.classList.remove("hovered");
-        label.classList.remove("hovered");
+        const task = label.closest(".project-task");
+        task?.classList.remove("hovered");
     });
 }
 
@@ -173,7 +185,8 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
 
         const prevElem = projectList?.lastChild as HTMLElement;
         let nextIndex = 0;
-        if (prevElem.dataset.index) nextIndex = parseInt(prevElem.dataset.index) + 1;
+
+        if (prevElem && prevElem.dataset.index) nextIndex = parseInt(prevElem.dataset.index) + 1;
         let projectName = "New Project";
         if (container.dataset.name) projectName = container.dataset.name;
         const formData = new FormData(form);
@@ -184,7 +197,6 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         const taskElem = createTask(taskName, date, priority, projectName, nextIndex);
         form.remove();
 
-        console.log(container);
         projectList?.append(taskElem);
         const projectHeader = getProjectHeader(container.dataset.id as string);
         const newProjectInfo = addTaskToProject(JSON.parse(projectHeader.dataset.projectInfo as string), {name: taskName, date, priority});
