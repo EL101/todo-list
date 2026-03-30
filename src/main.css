@@ -190,7 +190,7 @@
     opacity: 0.35;
     transition: opacity 0.2s;
 }
-.add-task-container:hover {
+.add-task-container:has(.add-task-button[data-canceled="true"]):hover {
     opacity: 0.8;
 }
 .add-task-button {
@@ -221,39 +221,80 @@
     margin-top: 4px;
 }
 
-.task-name-input {
+.task-input-field {
     background-color: transparent;
     border: none;
     border-bottom: 1px solid var(--main-border-surface);
+    color: var(--main-text-secondary);
     padding: 1px 4px;
-    color: var(--main-text-muted);
     transition: border-bottom 0.2s;
 }
-.task-name-input::placeholder {
-    color: var(--main-text-muted);
-}
-.task-name-input:focus {
+
+.task-input-field:focus {
     outline: none;
     border-bottom-color: var(--main-border-surface-strong);
 }
+
+.task-input-field:valid {
+    border-bottom-color: var(--main-border-surface-strong);
+}
+
+.task-name-input::placeholder {
+    color: var(--main-text-muted);
+}
+
 .task-name-input:focus::placeholder {
     opacity: 0.5;
 }
 
-.date-picker {
-    background-color: transparent;
-    border: none;
-    color: var(--main-text-muted);
-    border-bottom: 1px solid var(--main-border-surface);
-    
-}
 
-.date-picker:focus {
-    outline: none;
-    border-bottom-color: var(--main-border-surface-strong);
+.tag-input-container {
+    display: flex;
+    gap: 1rem;
 }
 
 .date-picker::-webkit-calendar-picker-indicator {
     filter: invert(0.6); /* 0 = black, 1 = white, 0.6 ≈ muted */
     cursor: pointer;
+}
+
+.date-picker:invalid::-webkit-datetime-edit {
+    color: var(--main-text-muted);
+}
+
+.priority-picker:invalid,
+.priority-picker option[value=""] {
+    color: var(--main-text-muted);
+}
+
+.task-input-btn-container {
+    display: flex;
+    gap: 8px;
+}
+
+.submit-task-btn, .cancel-task-btn {
+    background: transparent;
+    padding: 1px 4px;
+    cursor: pointer;
+}
+
+.submit-task-btn {
+    color: var(--main-text-secondary);
+    border: 1px solid var(--main-border-surface-strong);
+    transition: background-color 0.2s;
+}
+
+.submit-task-btn:hover {
+    background-color: var(--main-surface-hover);
+}
+
+.cancel-task-btn {
+    border: none;
+    color: var(--main-text-muted);
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.cancel-task-btn:hover {
+    opacity: 1;
 }
