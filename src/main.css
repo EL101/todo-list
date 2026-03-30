@@ -211,7 +211,7 @@
     cursor: pointer;
 }
 
-.task-input-container {
+.task-input-form {
     background-color: var(--main-surface);
     display: flex;
     flex-direction: column;

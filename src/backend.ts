@@ -6,6 +6,11 @@ export function priorityToStr(priority: 0 | 1 | 2): string {
     else return "High";
 }
 
+export function strToPriority(str: string) {
+    if (str === "Low") return 0;
+    else if (str === "Medium") return 1;
+    else return 2;
+}
 export function parseProjectInfo(raw: string): Project | null {
     try {
         return JSON.parse(raw) as Project;

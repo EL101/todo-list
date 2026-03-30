@@ -1,6 +1,6 @@
 import { format } from "date-fns";
-import { Project } from "./types";
-import { priorityToStr, parseProjectInfo } from "./backend";
+import { Priority, Project } from "./types";
+import { priorityToStr, parseProjectInfo, strToPriority } from "./backend";
 
 const editSVG = `
 <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -53,7 +53,6 @@ export function setTaskLabelEventListeners(label: HTMLElement) {
 export function setDatePickerEventListeners(datePicker: HTMLInputElement) {
     datePicker.addEventListener("change", () => {
         if (!datePicker.value) return;
-        datePicker.dataset.formatted = format(new Date(datePicker.value), "MMM d, yyyy h:mm a");
     });
 }
 
@@ -62,13 +61,14 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         if (btn.dataset.canceled === "false") return;
         btn.dataset.canceled = "false";
 
-        const inputContainer = document.createElement("div");
-        inputContainer.classList.add("task-input-container");
+        const inputForm = document.createElement("form");
+        inputForm.classList.add("task-input-form");
 
         const nameField = document.createElement("input");
         nameField.type = "text";
         nameField.required = true;
         nameField.placeholder = "Task name";
+        nameField.name = "taskName";
         nameField.classList.add("task-name-input", "task-input-field");
 
         const tagInputContainer = document.createElement("div");
@@ -78,6 +78,7 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         datePicker.classList.add("date-picker", "task-input-field");
         datePicker.type = "datetime-local";
         datePicker.required = true;
+        datePicker.name = "date";
         setDatePickerEventListeners(datePicker);
 
         const priorityPicker = document.createElement("select");
@@ -90,6 +91,7 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
             if (op === "") { option.selected = true; option.disabled = true; }
             priorityPicker.append(option);
         }
+        priorityPicker.name = "priority";
         tagInputContainer.append(datePicker, priorityPicker);
 
         const btnContainer = document.createElement("div");
@@ -98,26 +100,96 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         const submitTaskBtn = document.createElement("button");
         submitTaskBtn.textContent = "Add Task";
         submitTaskBtn.classList.add("submit-task-btn");
+        setSubmitTaskEventListeners(submitTaskBtn, inputForm, container, btn);
 
         const cancelButton = document.createElement("button");
         cancelButton.textContent = "Cancel";
         cancelButton.classList.add("cancel-task-btn");
         cancelButton.addEventListener("click", () => {
-            container.removeChild(inputContainer);
+            container.removeChild(inputForm);
             btn.dataset.canceled = "true";
         });
 
         btnContainer.append(submitTaskBtn, cancelButton);
-        inputContainer.append(nameField, tagInputContainer, btnContainer);
-        container.insertBefore(inputContainer, elemAfter);
+        inputForm.append(nameField, tagInputContainer, btnContainer);
+        container.insertBefore(inputForm, elemAfter);
     });
 }
+export function createTask(name: string, date: string, priority: Priority, project: string, index: number) {
+    const taskElem = document.createElement("li");
+    taskElem.classList.add("project-task");
+    taskElem.dataset.index = "" + index;
 
+    const labelTagContainer = document.createElement("div");
+    labelTagContainer.classList.add("label-tag-container");
+
+    const btnLabelContainer = document.createElement("div");
+    btnLabelContainer.classList.add("btn-label-container");
+
+    const btn = document.createElement("button");
+    btn.classList.add("task-complete-btn");
+    setTaskCompleteBtnEventListeners(btn);
+
+    const label = document.createElement("span");
+    label.classList.add("task-label");
+    label.textContent = name;
+    setTaskLabelEventListeners(label);
+    btnLabelContainer.append(btn, label);
+
+    const tags = document.createElement("div");
+    tags.classList.add("tags-container");
+
+    const dateTag = document.createElement("div");
+    dateTag.classList.add("date-tag");
+    dateTag.textContent = format(new Date(date), "MMM d, yyyy h:mm a");
+
+    const priorityTag = document.createElement("div");
+    priorityTag.classList.add("priority-tag", priorityToStr(priority).toLowerCase());
+    priorityTag.textContent = priorityToStr(priority);
+
+    const projectTag = document.createElement("div");
+    projectTag.classList.add("project-tag");
+    projectTag.textContent = project;
+
+    tags.append(dateTag, priorityTag, projectTag);
+    labelTagContainer.append(btnLabelContainer, tags);
+
+    const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
+    editBtn.classList.add("edit-btn");
+
+    taskElem.append(labelTagContainer, editBtn);
+    return taskElem;
+}
+export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFormElement, container: HTMLElement, addTaskBtn: HTMLButtonElement) {
+    btn.addEventListener("click", e => {
+        e.preventDefault();
+        if (!form.reportValidity()) return;
+        addTaskBtn.dataset.canceled = "true";
+        const projectList = container.querySelector(".project-task-list");
+
+        const prevElem = projectList?.lastChild as HTMLElement;
+        let nextIndex = 0;
+        if (prevElem.dataset.index) nextIndex = parseInt(prevElem.dataset.index) + 1;
+        let projectName = "New Project";
+        if (container.dataset.name) projectName = container.dataset.name;
+        const formData = new FormData(form);
+        const taskName = formData.get("taskName") as string;
+        const date = formData.get("date") as string;
+        const priority = strToPriority(formData.get("priority") as string);
+        console.log(priority);
+        const taskElem = createTask(taskName, date, priority, projectName, nextIndex);
+        form.remove();
+
+        console.log(container);
+        projectList?.append(taskElem);
+    });
+}
 // ── Render project ───────────────────────────────────────
 export function addProject(projectInfo: Project, id: string) {
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
     projectContainer.dataset.id = id;
+    projectContainer.dataset.name = projectInfo.title;
 
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
@@ -128,49 +200,7 @@ export function addProject(projectInfo: Project, id: string) {
 
     for (let i = 0; i < projectInfo.tasks.length; i++) {
         const task = projectInfo.tasks[i];
-
-        const taskElem = document.createElement("li");
-        taskElem.classList.add("project-task");
-        taskElem.dataset.index = "" + i;
-
-        const labelTagContainer = document.createElement("div");
-        labelTagContainer.classList.add("label-tag-container");
-
-        const btnLabelContainer = document.createElement("div");
-        btnLabelContainer.classList.add("btn-label-container");
-
-        const btn = document.createElement("button");
-        btn.classList.add("task-complete-btn");
-        setTaskCompleteBtnEventListeners(btn);
-
-        const label = document.createElement("span");
-        label.classList.add("task-label");
-        label.textContent = task.name;
-        setTaskLabelEventListeners(label);
-        btnLabelContainer.append(btn, label);
-
-        const tags = document.createElement("div");
-        tags.classList.add("tags-container");
-
-        const dateTag = document.createElement("div");
-        dateTag.classList.add("date-tag");
-        dateTag.textContent = format(new Date(task.date), "MMM d, yyyy h:mm a");
-
-        const priorityTag = document.createElement("div");
-        priorityTag.classList.add("priority-tag", priorityToStr(task.priority).toLowerCase());
-        priorityTag.textContent = priorityToStr(task.priority);
-
-        const projectTag = document.createElement("div");
-        projectTag.classList.add("project-tag");
-        projectTag.textContent = projectInfo.title;
-
-        tags.append(dateTag, priorityTag, projectTag);
-        labelTagContainer.append(btnLabelContainer, tags);
-
-        const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
-        editBtn.classList.add("edit-btn");
-
-        taskElem.append(labelTagContainer, editBtn);
+        const taskElem = createTask(task.name, task.date, task.priority, projectInfo.title, i);
         list.append(taskElem);
     }
 
