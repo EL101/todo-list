@@ -1,6 +1,6 @@
 import { format } from "date-fns";
-import { Priority, Project } from "./types";
-import { priorityToStr, parseProjectInfo, strToPriority, addTaskToProject, removeTaskFromProject } from "./backend";
+import { Priority, Task } from "./types";
+import { priorityToStr, strToPriority, Project} from "./backend";
 
 const editSVG = `
 <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,11 +39,13 @@ export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
     });
     btn.addEventListener("click", () => {
         const task = btn.closest(".project-task") as HTMLElement;
-        const index = parseInt(task.dataset.index as string);
-        const id = btn.closest<HTMLElement>(".project-container")?.dataset.id;
-        const projectHeader = getProjectHeader(id as string);
-        const newProjectInfo = removeTaskFromProject(JSON.parse(projectHeader.dataset.projectInfo as string), index);
-        projectHeader.dataset.projectInfo = JSON.stringify(newProjectInfo);
+        const taskID = parseInt(task.dataset.id as string);
+        const headerID = btn.closest<HTMLElement>(".project-container")?.dataset.id;
+        const projectHeader = getProjectHeader(headerID as string);
+        const proj = Project.parse(projectHeader.dataset.projectInfo as string);
+        proj?.removeTask(taskID);
+        console.log(taskID);
+        projectHeader.dataset.projectInfo = JSON.stringify(proj);
         task?.remove();
     });
 }
@@ -130,10 +132,10 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
     });
 }
 
-export function createTask(name: string, date: string, priority: Priority, project: string, index: number) {
+export function createTask(name: string, date: string, priority: Priority, project: string, id: number) {
     const taskElem = document.createElement("li");
     taskElem.classList.add("project-task");
-    taskElem.dataset.index = "" + index;
+    taskElem.dataset.id = "" + id;
 
     const labelTagContainer = document.createElement("div");
     labelTagContainer.classList.add("label-tag-container");
@@ -183,25 +185,24 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         addTaskBtn.dataset.canceled = "true";
         const projectList = container.querySelector(".project-task-list");
 
-        const prevElem = projectList?.lastChild as HTMLElement;
-        let nextIndex = 0;
-
-        if (prevElem && prevElem.dataset.index) nextIndex = parseInt(prevElem.dataset.index) + 1;
         let projectName = "New Project";
         if (container.dataset.name) projectName = container.dataset.name;
         const formData = new FormData(form);
         const taskName = formData.get("taskName") as string;
         const date = formData.get("date") as string;
         const priority = strToPriority(formData.get("priority") as string);
-        console.log(priority);
-        const taskElem = createTask(taskName, date, priority, projectName, nextIndex);
+
+        const projectHeader = getProjectHeader(container.dataset.id as string);
+        const proj = Project.parse(projectHeader.dataset.projectInfo as string);
+
+        const taskElem = createTask(taskName, date, priority, projectName, proj?.getNextID() as number);
+        proj?.addTask(taskName, date, priority);
+
         form.remove();
 
         projectList?.append(taskElem);
-        const projectHeader = getProjectHeader(container.dataset.id as string);
-        const newProjectInfo = addTaskToProject(JSON.parse(projectHeader.dataset.projectInfo as string), {name: taskName, date, priority});
         
-        projectHeader.dataset.projectInfo = JSON.stringify(newProjectInfo);
+        projectHeader.dataset.projectInfo = JSON.stringify(proj);
     });
 }
 
@@ -213,21 +214,22 @@ export function getProjectHeader(id: string) {
 
 // ── Render project ───────────────────────────────────────
 export function addProject(projectInfo: Project, id: string) {
+    
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
     projectContainer.dataset.id = id;
-    projectContainer.dataset.name = projectInfo.title;
+    projectContainer.dataset.name = projectInfo.getTitle();
 
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
-    heading.textContent = projectInfo.title;
+    heading.textContent = projectInfo.getTitle();
 
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
 
-    for (let i = 0; i < projectInfo.tasks.length; i++) {
-        const task = projectInfo.tasks[i];
-        const taskElem = createTask(task.name, task.date, task.priority, projectInfo.title, i);
+    for (let i = 0; i < projectInfo.getTasks().length; i++) {
+        const task = projectInfo.getTasks()[i];
+        const taskElem = createTask(task.name, task.date, task.priority, projectInfo.getTitle(), task.id);
         list.append(taskElem);
     }
 
@@ -254,7 +256,7 @@ export function addProject(projectInfo: Project, id: string) {
 
 // ── Sidebar project checkboxes ───────────────────────────
 document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEach(child => {
-    child.addEventListener("click", () => {
+    child.addEventListener("change", () => {
         if (!child.checked) {
             const childID = child.parentElement?.dataset.id;
             Array.from(mainProjectContainer?.children ?? [])
@@ -264,7 +266,7 @@ document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEac
             const container = child.parentElement as HTMLElement;
             const raw = container.dataset.projectInfo;
             const id = container.dataset.id;
-            const projectInfo = raw ? parseProjectInfo(raw) : null;
+            const projectInfo = raw ? Project.parse(raw) : null;
             if (projectInfo && id) addProject(projectInfo, id);
         }
     });

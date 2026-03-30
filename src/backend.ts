@@ -1,4 +1,4 @@
-import { Project, Task } from "./types";
+import { Priority, Task } from "./types";
 
 export function priorityToStr(priority: 0 | 1 | 2): string {
     if (priority === 0) return "Low";
@@ -11,20 +11,43 @@ export function strToPriority(str: string) {
     else if (str === "Medium") return 1;
     else return 2;
 }
-export function parseProjectInfo(raw: string): Project | null {
-    try {
-        return JSON.parse(raw) as Project;
-    } catch {
-        return null;
+
+export class Project {
+    private title: string;
+    private tasks: Task[];
+    private nextID: number;
+    constructor(title: string, tasks: Task[]) {
+        this.title = title;
+        this.tasks = tasks;
+        this.nextID = tasks.length > 0 ? Math.max(...tasks.map(task => task.id)) + 1 : 0;
     }
-}
 
-export function addTaskToProject(project: Project, task: Task) {
-    project.tasks.push(task);
-    return project;
-}
+    public addTask(name: string, date: string, priority: Priority) {
+        this.tasks.push({name, date, priority, id: this.nextID});
+        this.nextID++;
+    }
 
-export function removeTaskFromProject(project: Project, index: number) {
-    project.tasks.splice(index, 1);
-    return project;
+    public removeTask(id: number) {
+        this.tasks = this.tasks.filter(task => task.id !== id);
+    }
+
+    public getTasks() {
+        return [...this.tasks];
+    }
+
+    public getTitle() {
+        return this.title;
+    }
+
+    public getNextID() {
+        return this.nextID;
+    }
+    public static parse(raw: string) {
+        try {
+            const data = JSON.parse(raw);
+            return new Project(data.title, data.tasks);
+        } catch {
+            return null;
+        }
+    }
 }

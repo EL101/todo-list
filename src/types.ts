@@ -4,9 +4,10 @@ export type Task = {
     name: string,
     date: string,
     priority: Priority,
+    id: number
 };
 
-export type Project = {
-    title: string,
-    tasks: Task[]
-};
+// export type Project = {
+//     title: string,
+//     tasks: Task[]
+// };
