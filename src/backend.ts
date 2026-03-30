@@ -1,4 +1,4 @@
-import { Project } from "./types";
+import { Project, Task } from "./types";
 
 export function priorityToStr(priority: 0 | 1 | 2): string {
     if (priority === 0) return "Low";
@@ -17,4 +17,9 @@ export function parseProjectInfo(raw: string): Project | null {
     } catch {
         return null;
     }
+}
+
+export function addTaskToProject(project: Project, task: Task) {
+    project.tasks.push(task);
+    return project;
 }

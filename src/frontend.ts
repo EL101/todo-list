@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Priority, Project } from "./types";
-import { priorityToStr, parseProjectInfo, strToPriority } from "./backend";
+import { priorityToStr, parseProjectInfo, strToPriority, addTaskToProject } from "./backend";
 
 const editSVG = `
 <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -115,6 +115,7 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         container.insertBefore(inputForm, elemAfter);
     });
 }
+
 export function createTask(name: string, date: string, priority: Priority, project: string, index: number) {
     const taskElem = document.createElement("li");
     taskElem.classList.add("project-task");
@@ -160,6 +161,7 @@ export function createTask(name: string, date: string, priority: Priority, proje
     taskElem.append(labelTagContainer, editBtn);
     return taskElem;
 }
+
 export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFormElement, container: HTMLElement, addTaskBtn: HTMLButtonElement) {
     btn.addEventListener("click", e => {
         e.preventDefault();
@@ -182,8 +184,19 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
 
         console.log(container);
         projectList?.append(taskElem);
+        const projectHeader = getProjectHeader(container.dataset.id as string);
+        const newProjectInfo = addTaskToProject(JSON.parse(projectHeader.dataset.projectInfo as string), {name: taskName, date, priority});
+        
+        projectHeader.dataset.projectInfo = JSON.stringify(newProjectInfo);
     });
 }
+
+export function getProjectHeader(id: string) {
+    const nodeList = document.querySelectorAll<HTMLElement>(".project-task-header");
+    const headers = Array.from(nodeList);
+    return headers.filter(header => header.dataset.id === id)[0];
+}
+
 // ── Render project ───────────────────────────────────────
 export function addProject(projectInfo: Project, id: string) {
     const projectContainer = document.createElement("div");
