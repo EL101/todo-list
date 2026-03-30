@@ -1,6 +1,7 @@
 import "./styles.css"
 import "./sidebar.css"
 import "./main.css"
+import {format, parseISO} from "date-fns"
 
 const editSVG = `
 <svg width="10px" height="10px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -66,6 +67,13 @@ function setTaskLabelEventListeners(label: HTMLElement) {
     });
 }
 
+function setDatePickerEventListeners(datePicker: HTMLInputElement) {
+    datePicker.addEventListener("change", () => {
+        const date = parseISO(datePicker.value);
+        datePicker.dataset.formatted = format(date, "MMM d, yyyy h:mm a");
+    });
+}
+
 function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement, elemAfter: HTMLElement) {
     btn.addEventListener("click", () => {
         if (btn.dataset.canceled === "false") return;
@@ -81,7 +89,10 @@ function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement
         tagInputContainer.classList.add("tag-input-container");
         const datePicker = document.createElement("input");
         datePicker.classList.add("date-picker");
-        datePicker.type = "date";
+        datePicker.type = "datetime-local";
+        datePicker.required = true;
+        setDatePickerEventListeners(datePicker);
+
         const priorityPicker = document.createElement("select");
         priorityPicker.classList.add("priority-picker");
         tagInputContainer.append(datePicker, priorityPicker);
@@ -92,8 +103,8 @@ function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement
         submitTaskBtn.textContent = "Add Task";
         submitTaskBtn.classList.add("submit-task-btn");
         const cancelButton = document.createElement("button");
-        submitTaskBtn.textContent = "Cancel";
-        submitTaskBtn.classList.add("cancel-task-btn");
+        cancelButton.textContent = "Cancel";
+        cancelButton.classList.add("cancel-task-btn");
         btnContainer.append(submitTaskBtn, cancelButton);
 
         inputContainer.append(nameField, tagInputContainer, btnContainer);
@@ -151,7 +162,8 @@ function addProject(projectInfo: project, id:string) {
         tags.classList.add("tags-container");
         const dateTag = document.createElement("div");
         dateTag.classList.add("date-tag")
-        dateTag.textContent = task.date;
+        dateTag.textContent = format(new Date(task.date), "MMM d, yyyy h:mm a");
+
         const priorityTag = document.createElement("div");
         priorityTag.classList.add("priority-tag");
         priorityTag.textContent = priorityToStr(task.priority);

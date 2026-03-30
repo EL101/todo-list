@@ -8,6 +8,10 @@
     --main-text-secondary: rgb(195, 185, 165);
     --main-text-muted: rgba(245, 235, 220, 0.4);
     --main-border-strong: rgba(255,255,255,0.15);
+
+    --main-border-surface: rgba(255, 255, 255, 0.1);
+    --main-border-surface-strong: rgba(255, 255, 255, 0.3);
+
 }
 
 .main {
@@ -220,16 +224,36 @@
 .task-name-input {
     background-color: transparent;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--main-border-surface);
     padding: 1px 4px;
-    color: var(--main-text-secondary);
+    color: var(--main-text-muted);
     transition: border-bottom 0.2s;
 }
-
+.task-name-input::placeholder {
+    color: var(--main-text-muted);
+}
 .task-name-input:focus {
     outline: none;
-    border-bottom-color: rgba(255, 255, 255, 0.3);
+    border-bottom-color: var(--main-border-surface-strong);
 }
 .task-name-input:focus::placeholder {
     opacity: 0.5;
+}
+
+.date-picker {
+    background-color: transparent;
+    border: none;
+    color: var(--main-text-muted);
+    border-bottom: 1px solid var(--main-border-surface);
+    
+}
+
+.date-picker:focus {
+    outline: none;
+    border-bottom-color: var(--main-border-surface-strong);
+}
+
+.date-picker::-webkit-calendar-picker-indicator {
+    filter: invert(0.6); /* 0 = black, 1 = white, 0.6 ≈ muted */
+    cursor: pointer;
 }
