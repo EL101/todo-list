@@ -69,6 +69,8 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         nameField.required = true;
         nameField.placeholder = "Task name";
         nameField.name = "taskName";
+        nameField.autocomplete = "off";
+        // nameField.autocomplete = "new-password";
         nameField.classList.add("task-name-input", "task-input-field");
 
         const tagInputContainer = document.createElement("div");
