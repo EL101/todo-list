@@ -15,20 +15,23 @@ export function strToPriority(str: string) {
 export class Project {
     private title: string;
     private tasks: Task[];
-    private nextID: number;
-    constructor(title: string, tasks: Task[]) {
+    private projectID: number;
+    private nextTaskID: number;
+    constructor(title: string, tasks: Task[], projectID: number) {
         this.title = title;
         this.tasks = tasks;
-        this.nextID = tasks.length > 0 ? Math.max(...tasks.map(task => task.id)) + 1 : 0;
+        this.projectID = projectID;
+        this.nextTaskID = tasks.length > 0 ? Math.max(...tasks.map(task => parseInt(task.id.split('-')[1]))) + 1 : 0;
     }
 
     public addTask(name: string, date: string, priority: Priority) {
-        this.tasks.push({name, date, priority, id: this.nextID});
-        this.nextID++;
+
+        this.tasks.push({name, date, priority, id: this.projectID + "-" + this.nextTaskID});
+        this.nextTaskID++;
     }
 
     public removeTask(id: number) {
-        this.tasks = this.tasks.filter(task => task.id !== id);
+        this.tasks = this.tasks.filter(task => task.id !== this.projectID + "-" + id);
     }
 
     public getTasks() {
@@ -42,10 +45,10 @@ export class Project {
         this.title = t;
     }
     public getNextID() {
-        return this.nextID;
+        return this.projectID + "-" + this.nextTaskID;
     }
 
-    public updateTask(id: number, newTask: Task) {
+    public updateTask(id: string, newTask: Task) {
         for (let i = 0; i < this.tasks.length; i++) {
             const task = this.tasks[i];
             if (task.id === id) {
@@ -57,9 +60,17 @@ export class Project {
     public static parse(raw: string) {
         try {
             const data = JSON.parse(raw);
-            return new Project(data.title, data.tasks);
+            return new Project(data.title, data.tasks, data.projectID);
         } catch {
             return null;
         }
+    }
+    public toJSON() {
+        return {
+            title: this.title,
+            tasks: this.tasks,
+            projectID: this.projectID,
+            nextTaskID: this.nextTaskID,
+        };
     }
 }

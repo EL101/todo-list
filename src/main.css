@@ -12,6 +12,9 @@
     --main-border-surface: rgba(255, 255, 255, 0.1);
     --main-border-surface-strong: rgba(255, 255, 255, 0.3);
 
+    --priority-low: rgb(100, 210, 180);
+    --priority-medium: rgb(239, 180, 74);
+    --priority-high: rgb(239, 100, 90);
 }
 
 .main {
@@ -101,20 +104,40 @@
 .project-task {
     display: flex;
     align-items: center;
-    gap: 4px;
     background-color: var(--main-surface);
     padding: 2px 8px 6px 8px;
     border-radius: 5px;
     transition: background-color 0.3s;
+    position: relative;
 }
 
 .project-task:hover {
     background-color: var(--main-surface-hover);
 }
 
+.project-task::before {
+    content: '';
+    width: 4px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 5px 0 0 5px;
+}
+
+.project-task:has(.low)::before {
+    background-color: var(--priority-low);
+}
+.project-task:has(.medium)::before {
+    background-color: var(--priority-medium);
+}
+.project-task:has(.high)::before {
+    background-color: var(--priority-high);
+}
 .label-tag-container {
     display: flex;
     flex-direction: column;
+    gap: 4px;
     align-items: flex-start;
 }
 
@@ -202,19 +225,19 @@
 .priority-tag.high {
     background-color: rgba(239, 100, 90, 0.15);
     border: 1px solid rgba(239, 100, 90, 0.3);
-    color: rgb(239, 100, 90);
+    color: var(--priority-high);
 }
 
 .priority-tag.medium {
     background-color: rgba(239, 180, 74, 0.15);
     border: 1px solid rgba(239, 180, 74, 0.3);
-    color: rgb(239, 180, 74);
+    color: var(--priority-medium);
 }
 
 .priority-tag.low {
     background-color: rgba(100, 210, 180, 0.15);
     border: 1px solid rgba(100, 210, 180, 0.3);
-    color: rgb(100, 210, 180);
+    color: var(--priority-low);
 }
 
 .project-tag {

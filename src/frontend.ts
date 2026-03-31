@@ -47,7 +47,7 @@ export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
     });
     btn.addEventListener("click", () => {
         const task = btn.closest(".project-task") as HTMLElement;
-        const taskID = parseInt(task.dataset.id as string);
+        const taskID = parseInt((task.dataset.id as string).split("-")[1]);
         const headerID = btn.closest<HTMLElement>(".project-container")?.dataset.id;
         const projectHeader = getProjectHeader(headerID as string);
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
@@ -152,10 +152,10 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
     });
 }
 
-export function createTask(name: string, date: string, priority: Priority, project: string, id: number) {
+export function createTask(name: string, date: string, priority: Priority, project: string, id: string) {
     const taskElem = document.createElement("li");
     taskElem.classList.add("project-task");
-    taskElem.dataset.id = "" + id;
+    taskElem.dataset.id = id;
 
     const labelTagContainer = document.createElement("div");
     labelTagContainer.classList.add("label-tag-container");
@@ -242,7 +242,7 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         const projectHeader = getProjectHeader(container.dataset.id as string);
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
 
-        const taskElem = createTask(taskName, date, priority, projectName, proj?.getNextID() as number);
+        const taskElem = createTask(taskName, date, priority, projectName, proj?.getNextID() as string);
         
         proj?.addTask(taskName, date, priority);
 
@@ -301,7 +301,7 @@ export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
 }
 
 // ── Render project ───────────────────────────────────────
-export function addProject(projectInfo: Project, id: string) {
+export function addProject(projectInfo: Project, id: string, editable=true) {
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
     projectContainer.dataset.id = id;
@@ -312,10 +312,14 @@ export function addProject(projectInfo: Project, id: string) {
     const headingSpan = document.createElement("span");
     headingSpan.classList.add("project-header-text");
     headingSpan.textContent = projectInfo.getTitle();
-    const editHeading = getSVGElement(editSVG);
-    editHeading.classList.add("edit-btn");
-    setEditBtnHeadingEventListeners(editHeading);
-    heading.append(headingSpan, editHeading);
+    if (editable) {
+        const editHeading = getSVGElement(editSVG);
+        editHeading.classList.add("edit-btn");
+        setEditBtnHeadingEventListeners(editHeading);
+        heading.append(headingSpan, editHeading);
+    } else {
+        heading.append(headingSpan);
+    }
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
 
@@ -375,13 +379,14 @@ function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
         addProjectsBtn.dataset.canceled = "true";
         const formData = new FormData(form);
         const projName = formData.get("name");
-        const projInfo = new Project(projName as string, []);
+        const allHeaders = document.querySelectorAll<HTMLElement>(".project-task-header");
+        const newID = allHeaders.length > 0 ? Math.max(...Array.from(allHeaders).map(header => parseInt(header.dataset.id as string))) + 1 : 0;
+
+        const projInfo = new Project(projName as string, [], newID);
         form?.remove();
         const newProjHeader = document.createElement("div");
         newProjHeader.classList.add("project-task-header");
         newProjHeader.dataset.projectInfo = JSON.stringify(projInfo);
-        const allHeaders = document.querySelectorAll<HTMLElement>(".project-task-header");
-        const newID = allHeaders.length > 0 ? Math.max(...Array.from(allHeaders).map(header => parseInt(header.dataset.id as string))) + 1 : 0;
         newProjHeader.dataset.id = "" + newID;
 
         const checkbox = document.createElement("input");
@@ -455,4 +460,16 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
 
     projHeaderInput.append(textField, submitBtn);
     projHeaderContainer?.prepend(projHeaderInput);
+});
+
+
+document.querySelector(".all-section")?.addEventListener("click", () => {
+    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
+    const tasks = projects.map(project => Project.parse(project.dataset.projectInfo as string)?.getTasks());
+    const combinedTasks = tasks.reduce((acc, lst) => acc?.concat(...lst as Task[]), []);
+    const combinedProject = {
+        title: "All",
+        tasks: combinedTasks
+    }
+    console.log(combinedProject);
 });

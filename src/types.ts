@@ -4,7 +4,7 @@ export type Task = {
     name: string,
     date: string,
     priority: Priority,
-    id: number
+    id: string
 };
 
 // export type Project = {
