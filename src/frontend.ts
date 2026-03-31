@@ -214,7 +214,6 @@ export function getProjectHeader(id: string) {
 
 // ── Render project ───────────────────────────────────────
 export function addProject(projectInfo: Project, id: string) {
-    
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
     projectContainer.dataset.id = id;
@@ -255,19 +254,78 @@ export function addProject(projectInfo: Project, id: string) {
 }
 
 // ── Sidebar project checkboxes ───────────────────────────
-document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEach(child => {
-    child.addEventListener("change", () => {
-        if (!child.checked) {
-            const childID = child.parentElement?.dataset.id;
+document.querySelectorAll<HTMLInputElement>(".project-task-header input").forEach(btn => {
+    setProjHeaderCheckboxEventListeners(btn);
+});
+
+function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
+    btn.addEventListener("click", e => {
+        e.preventDefault();
+        const projHeaderContainer = document.querySelector(".projects-container");
+        const addProjectsBtn = document.querySelector(".add-projects") as HTMLElement;
+        const form = document.querySelector<HTMLFormElement>(".project-header-input-form");
+        if (!form?.reportValidity()) return;
+        addProjectsBtn.dataset.canceled = "true";
+        const formData = new FormData(form);
+        const projName = formData.get("name");
+        const projInfo = new Project(projName as string, []);
+        form?.remove();
+        const newProjHeader = document.createElement("div");
+        newProjHeader.classList.add("project-task-header");
+        newProjHeader.dataset.projectInfo = JSON.stringify(projInfo);
+        const allHeaders = document.querySelectorAll<HTMLElement>(".project-task-header");
+        const newID = allHeaders ? Math.max(...Array.from(allHeaders).map(header => parseInt(header.dataset.id as string))) + 1 : 0;
+        newProjHeader.dataset.id = "" + newID;
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = "checkbox" + newID;
+        checkbox.name = "checkbox" + newID;
+        setProjHeaderCheckboxEventListeners(checkbox);
+
+        const label = document.createElement("label");
+        label.htmlFor = "checkbox" + newID;
+        label.textContent = projName as string;
+        newProjHeader.append(checkbox, label);
+        
+        projHeaderContainer?.prepend(newProjHeader);
+    });
+}
+
+function setProjHeaderCheckboxEventListeners(btn: HTMLInputElement) {
+    btn.addEventListener("click", () => {
+        if (!btn.checked) {
+            const childID = btn.parentElement?.dataset.id;
             Array.from(mainProjectContainer?.children ?? [])
                 .filter(elem => elem instanceof HTMLElement && elem.dataset.id === childID)
                 .forEach(elem => mainProjectContainer?.removeChild(elem));
         } else {
-            const container = child.parentElement as HTMLElement;
+            const container = btn.parentElement as HTMLElement;
             const raw = container.dataset.projectInfo;
             const id = container.dataset.id;
             const projectInfo = raw ? Project.parse(raw) : null;
             if (projectInfo && id) addProject(projectInfo, id);
         }
-    });
+    })
+}
+document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("click", e => {
+    const btn = document.querySelector<HTMLButtonElement>(".add-projects") as HTMLButtonElement;
+    if (btn?.dataset.canceled === "false") return;
+    btn.dataset.canceled = "false";
+    const projHeaderContainer = document.querySelector(".projects-container");
+    const projHeaderInput = document.createElement("form");
+    projHeaderInput.classList.add("project-header-input-form");
+    const textField = document.createElement("input");
+    textField.classList.add("project-header-input-field");
+    textField.type = "text";
+    textField.placeholder = "Project Name";
+    textField.name = "name";
+    textField.required = true;
+    const submitBtn = document.createElement("button");
+    submitBtn.classList.add("project-header-submit-btn");
+    submitBtn.textContent = "Add";
+    setProjHeaderSubmitBtnEventListeners(submitBtn);
+
+    projHeaderInput.append(textField, submitBtn);
+    projHeaderContainer?.prepend(projHeaderInput);
 });
