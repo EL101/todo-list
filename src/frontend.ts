@@ -1,4 +1,4 @@
-import { format, sub } from "date-fns";
+import { format, parse } from "date-fns";
 import { Priority, Task } from "./types";
 import { priorityToStr, strToPriority, Project} from "./backend";
 
@@ -78,64 +78,76 @@ export function setDatePickerEventListeners(datePicker: HTMLInputElement) {
     });
 }
 
-export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement, elemAfter: HTMLElement) {
-    btn.addEventListener("click", () => {
-        if (btn.dataset.canceled === "false") return;
-        btn.dataset.canceled = "false";
+export function createTaskInputForm(container?: HTMLElement, btn?: HTMLButtonElement, name?: string, date?: string, priority?: string) {
+    const inputForm = document.createElement("form");
+    inputForm.classList.add("task-input-form");
 
-        const inputForm = document.createElement("form");
-        inputForm.classList.add("task-input-form");
+    const nameField = document.createElement("input");
+    nameField.type = "text";
+    nameField.required = true;
+    nameField.placeholder = "Task name";
+    nameField.name = "taskName";
+    nameField.autocomplete = "off";
+    nameField.defaultValue = name ? name : "";
+    // nameField.autocomplete = "new-password";
+    nameField.classList.add("task-name-input", "main-input-field");
 
-        const nameField = document.createElement("input");
-        nameField.type = "text";
-        nameField.required = true;
-        nameField.placeholder = "Task name";
-        nameField.name = "taskName";
-        nameField.autocomplete = "off";
-        // nameField.autocomplete = "new-password";
-        nameField.classList.add("task-name-input", "main-input-field");
+    const tagInputContainer = document.createElement("div");
+    tagInputContainer.classList.add("tag-input-container");
 
-        const tagInputContainer = document.createElement("div");
-        tagInputContainer.classList.add("tag-input-container");
+    const datePicker = document.createElement("input");
+    datePicker.classList.add("date-picker", "main-input-field");
+    datePicker.type = "datetime-local";
+    datePicker.required = true;
+    datePicker.name = "date";
+    datePicker.defaultValue = date ?? "";
+    setDatePickerEventListeners(datePicker);
 
-        const datePicker = document.createElement("input");
-        datePicker.classList.add("date-picker", "main-input-field");
-        datePicker.type = "datetime-local";
-        datePicker.required = true;
-        datePicker.name = "date";
-        setDatePickerEventListeners(datePicker);
-
-        const priorityPicker = document.createElement("select");
-        priorityPicker.required = true;
-        priorityPicker.classList.add("priority-picker", "main-input-field");
-        for (const op of ["", "Low", "Medium", "High"]) {
-            const option = document.createElement("option");
-            option.value = op;
-            option.textContent = op === "" ? "Select priority" : op;
-            if (op === "") { option.selected = true; option.disabled = true; }
-            priorityPicker.append(option);
+    const priorityPicker = document.createElement("select");
+    priorityPicker.required = true;
+    priorityPicker.classList.add("priority-picker", "main-input-field");
+    for (const op of ["", "Low", "Medium", "High"]) {
+        const option = document.createElement("option");
+        option.value = op;
+        option.textContent = op === "" ? "Select priority" : op;
+        if (op === "") { 
+            if (!priority) option.selected = true; 
+            option.disabled = true; 
         }
-        priorityPicker.name = "priority";
-        tagInputContainer.append(datePicker, priorityPicker);
+        else if (priority === op) { 
+            option.selected = true;
+        }
+        priorityPicker.append(option);
+    }
+    priorityPicker.name = "priority";
+    tagInputContainer.append(datePicker, priorityPicker);
 
-        const btnContainer = document.createElement("div");
-        btnContainer.classList.add("task-input-btn-container");
+    const btnContainer = document.createElement("div");
+    btnContainer.classList.add("task-input-btn-container");
 
-        const submitTaskBtn = document.createElement("button");
-        submitTaskBtn.textContent = "Add Task";
-        submitTaskBtn.classList.add("submit-task-btn");
-        setSubmitTaskEventListeners(submitTaskBtn, inputForm, container, btn);
-
-        const cancelButton = document.createElement("button");
-        cancelButton.textContent = "Cancel";
-        cancelButton.classList.add("cancel-task-btn");
+    const submitTaskBtn = document.createElement("button");
+    submitTaskBtn.textContent = "Add Task";
+    submitTaskBtn.classList.add("submit-task-btn");
+    if (container && btn) setSubmitTaskEventListeners(submitTaskBtn, inputForm, container, btn);
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = "Cancel";
+    cancelButton.classList.add("cancel-task-btn");
+    if (container && btn) {
         cancelButton.addEventListener("click", () => {
             container.removeChild(inputForm);
             btn.dataset.canceled = "true";
         });
+    }
+    btnContainer.append(submitTaskBtn, cancelButton);
+    inputForm.append(nameField, tagInputContainer, btnContainer);
+    return inputForm;
+}
 
-        btnContainer.append(submitTaskBtn, cancelButton);
-        inputForm.append(nameField, tagInputContainer, btnContainer);
+export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTMLElement, elemAfter: HTMLElement) {
+    btn.addEventListener("click", () => {
+        if (btn.dataset.canceled === "false") return;
+        btn.dataset.canceled = "false";
+        const inputForm = createTaskInputForm(container, btn);
         container.insertBefore(inputForm, elemAfter);
     });
 }
@@ -181,7 +193,34 @@ export function createTask(name: string, date: string, priority: Priority, proje
 
     const editBtn = getSVGElement(editSVG);
     editBtn.classList.add("edit-btn");
+    editBtn.addEventListener("click", () => {
+        console.log(date);
+        const inputForm = createTaskInputForm(undefined, undefined, name, date, priorityToStr(priority));
+        taskElem.replaceWith(inputForm);
 
+        inputForm.querySelector(".cancel-task-btn")?.addEventListener("click", () => {
+            inputForm.replaceWith(taskElem);
+        });
+
+        inputForm.querySelector(".submit-task-btn")?.addEventListener("click", e => {
+            e.preventDefault();
+            if (!inputForm.reportValidity()) return;
+            const data = new FormData(inputForm);
+            const newName = data.get("taskName") as string;
+            const newDate = data.get("date") as string;
+            const newPriority = strToPriority(data.get("priority") as string);
+            const newTaskElem = createTask(newName, newDate, newPriority, project, id);
+            const projID = inputForm.closest<HTMLElement>(".project-container")!.dataset.id
+            const sidebarHeader = getProjectHeader(projID as string);
+            const projInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
+
+            const newTaskObj = {name: newName, date: newDate, priority: newPriority, id} as Task;
+            projInfo?.updateTask(id, newTaskObj);
+            console.log(projInfo);
+            sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
+            inputForm.replaceWith(newTaskElem);
+        });
+    });
     taskElem.append(labelTagContainer, editBtn);
     return taskElem;
 }
@@ -204,6 +243,7 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
 
         const taskElem = createTask(taskName, date, priority, projectName, proj?.getNextID() as number);
+        
         proj?.addTask(taskName, date, priority);
 
         form.remove();

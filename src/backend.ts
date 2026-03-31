@@ -44,6 +44,16 @@ export class Project {
     public getNextID() {
         return this.nextID;
     }
+
+    public updateTask(id: number, newTask: Task) {
+        for (let i = 0; i < this.tasks.length; i++) {
+            const task = this.tasks[i];
+            if (task.id === id) {
+                this.tasks[i] = newTask;
+                return;
+            }
+        }
+    }
     public static parse(raw: string) {
         try {
             const data = JSON.parse(raw);
