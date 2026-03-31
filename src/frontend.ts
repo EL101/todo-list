@@ -31,6 +31,10 @@ sidebar_collapse_button?.addEventListener("click", () => {
 
 projects_header?.addEventListener("click", () => {
     projects_section?.classList.toggle("collapsed");
+    const addProjectsBtn = document.querySelector<HTMLElement>(".add-projects") as HTMLElement;
+    addProjectsBtn.dataset.canceled = "true";
+    document.querySelector(".project-header-input-form")?.remove();
+
 });
 
 add_projects_btn?.addEventListener("click", e => e.stopPropagation());
@@ -47,14 +51,14 @@ export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
     });
     btn.addEventListener("click", () => {
         const task = btn.closest(".project-task") as HTMLElement;
+        const fullID = task.dataset.id as string;
         const taskID = parseInt((task.dataset.id as string).split("-")[1]);
-        const headerID = btn.closest<HTMLElement>(".project-container")?.dataset.id;
+        const headerID = fullID?.split('-')[0];
         const projectHeader = getProjectHeader(headerID as string);
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
         proj?.removeTask(taskID);
-        console.log(taskID);
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
-        task?.remove();
+        document.querySelectorAll(`.project-task[data-id='${fullID}']`).forEach(x => x.remove());
     });
 }
 
@@ -152,7 +156,7 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
     });
 }
 
-export function createTask(name: string, date: string, priority: Priority, project: string, id: string) {
+export function createTask(name: string, date: string, priority: Priority, project: string, id: string, editable=true) {
     const taskElem = document.createElement("li");
     taskElem.classList.add("project-task");
     taskElem.dataset.id = id;
@@ -165,12 +169,12 @@ export function createTask(name: string, date: string, priority: Priority, proje
 
     const btn = document.createElement("button");
     btn.classList.add("task-complete-btn");
-    setTaskCompleteBtnEventListeners(btn);
+    if (editable) setTaskCompleteBtnEventListeners(btn);
 
     const label = document.createElement("span");
     label.classList.add("task-label");
     label.textContent = name;
-    setTaskLabelEventListeners(label);
+    if (editable) setTaskLabelEventListeners(label);
     btnLabelContainer.append(btn, label);
 
     const tags = document.createElement("div");
@@ -190,38 +194,43 @@ export function createTask(name: string, date: string, priority: Priority, proje
 
     tags.append(dateTag, priorityTag, projectTag);
     labelTagContainer.append(btnLabelContainer, tags);
+    if (editable) {
+        const editBtn = getSVGElement(editSVG);
+        editBtn.classList.add("edit-btn");
+        editBtn.addEventListener("click", () => {
+            const inputForm = createTaskInputForm(undefined, undefined, name, date, priorityToStr(priority));
+            taskElem.replaceWith(inputForm);
 
-    const editBtn = getSVGElement(editSVG);
-    editBtn.classList.add("edit-btn");
-    editBtn.addEventListener("click", () => {
-        console.log(date);
-        const inputForm = createTaskInputForm(undefined, undefined, name, date, priorityToStr(priority));
-        taskElem.replaceWith(inputForm);
+            inputForm.querySelector(".cancel-task-btn")?.addEventListener("click", () => {
+                inputForm.replaceWith(taskElem);
+            });
 
-        inputForm.querySelector(".cancel-task-btn")?.addEventListener("click", () => {
-            inputForm.replaceWith(taskElem);
+            inputForm.querySelector(".submit-task-btn")?.addEventListener("click", e => {
+                e.preventDefault();
+                if (!inputForm.reportValidity()) return;
+                const data = new FormData(inputForm);
+                const newName = data.get("taskName") as string;
+                const newDate = data.get("date") as string;
+                const newPriority = strToPriority(data.get("priority") as string);
+                const newTaskElem = createTask(newName, newDate, newPriority, project, id);
+                const projID = id.split("-")[0];
+                const sidebarHeader = getProjectHeader(projID as string);
+                const projInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
+
+                const newTaskObj = {name: newName, date: newDate, priority: newPriority, id} as Task;
+                projInfo?.updateTask(id, newTaskObj);
+                console.log(projInfo);
+                sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
+                inputForm.replaceWith(newTaskElem);
+
+                // const uneditableNewTaskElem = createTask(newName, newDate, newPriority, project, id, false);
+                document.querySelectorAll(`.project-task[data-id='${id}']`).forEach(elem => elem.replaceWith(createTask(newName, newDate, newPriority, project, id)));
+            });
         });
-
-        inputForm.querySelector(".submit-task-btn")?.addEventListener("click", e => {
-            e.preventDefault();
-            if (!inputForm.reportValidity()) return;
-            const data = new FormData(inputForm);
-            const newName = data.get("taskName") as string;
-            const newDate = data.get("date") as string;
-            const newPriority = strToPriority(data.get("priority") as string);
-            const newTaskElem = createTask(newName, newDate, newPriority, project, id);
-            const projID = inputForm.closest<HTMLElement>(".project-container")!.dataset.id
-            const sidebarHeader = getProjectHeader(projID as string);
-            const projInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
-
-            const newTaskObj = {name: newName, date: newDate, priority: newPriority, id} as Task;
-            projInfo?.updateTask(id, newTaskObj);
-            console.log(projInfo);
-            sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
-            inputForm.replaceWith(newTaskElem);
-        });
-    });
-    taskElem.append(labelTagContainer, editBtn);
+        taskElem.append(labelTagContainer, editBtn);
+    } else {
+        taskElem.append(labelTagContainer);
+    }
     return taskElem;
 }
 
@@ -241,15 +250,16 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
 
         const projectHeader = getProjectHeader(container.dataset.id as string);
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
-
-        const taskElem = createTask(taskName, date, priority, projectName, proj?.getNextID() as string);
+        const nextID = proj?.getNextID() as string
+        const taskElem = createTask(taskName, date, priority, projectName, nextID);
         
         proj?.addTask(taskName, date, priority);
 
         form.remove();
 
         projectList?.append(taskElem);
-        
+        // const uneditableTaskElem = createTask(taskName, date, priority, projectName, nextID, false);
+        document.querySelector(".project-container[data-id='-1'] .project-task-list")?.append(createTask(taskName, date, priority, projectName, nextID));
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
     });
 }
@@ -328,25 +338,28 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
         const taskElem = createTask(task.name, task.date, task.priority, projectInfo.getTitle(), task.id);
         list.append(taskElem);
     }
+    if (editable) {
+        const addTaskContainer = document.createElement("div");
+        addTaskContainer.classList.add("add-task-container");
 
-    const addTaskContainer = document.createElement("div");
-    addTaskContainer.classList.add("add-task-container");
+        const addTaskButton = document.createElement("button");
+        addTaskButton.classList.add("add-task-button");
+        addTaskButton.id = id;
+        addTaskButton.textContent = "+";
+        addTaskButton.dataset.canceled = "true";
+        setAddTaskEventListeners(addTaskButton, projectContainer, addTaskContainer);
 
-    const addTaskButton = document.createElement("button");
-    addTaskButton.classList.add("add-task-button");
-    addTaskButton.id = id;
-    addTaskButton.textContent = "+";
-    addTaskButton.dataset.canceled = "true";
-    setAddTaskEventListeners(addTaskButton, projectContainer, addTaskContainer);
+        const addTaskButtonLabel = document.createElement("label");
+        addTaskButtonLabel.classList.add("add-task-label");
+        addTaskButtonLabel.htmlFor = id;
+        addTaskButtonLabel.textContent = "Add Task";
+        addTaskButtonLabel.addEventListener("click", () => addTaskButton.click());
 
-    const addTaskButtonLabel = document.createElement("label");
-    addTaskButtonLabel.classList.add("add-task-label");
-    addTaskButtonLabel.htmlFor = id;
-    addTaskButtonLabel.textContent = "Add Task";
-    addTaskButtonLabel.addEventListener("click", () => addTaskButton.click());
-
-    addTaskContainer.append(addTaskButton, addTaskButtonLabel);
-    projectContainer.append(heading, list, addTaskContainer);
+        addTaskContainer.append(addTaskButton, addTaskButtonLabel);
+        projectContainer.append(heading, list, addTaskContainer);
+    } else {
+        projectContainer.append(heading, list);
+    }
     mainProjectContainer?.append(projectContainer);
 }
 
@@ -444,6 +457,8 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
     const btn = document.querySelector<HTMLButtonElement>(".add-projects") as HTMLButtonElement;
     if (btn?.dataset.canceled === "false") return;
     btn.dataset.canceled = "false";
+    const projectsSection = document.querySelector<HTMLElement>(".projects-section");
+    projectsSection?.classList.remove("collapsed");
     const projHeaderContainer = document.querySelector(".projects-container");
     const projHeaderInput = document.createElement("form");
     projHeaderInput.classList.add("project-header-input-form");
@@ -462,14 +477,39 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
     projHeaderContainer?.prepend(projHeaderInput);
 });
 
-
-document.querySelector(".all-section")?.addEventListener("click", () => {
-    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
-    const tasks = projects.map(project => Project.parse(project.dataset.projectInfo as string)?.getTasks());
-    const combinedTasks = tasks.reduce((acc, lst) => acc?.concat(...lst as Task[]), []);
-    const combinedProject = {
-        title: "All",
-        tasks: combinedTasks
+document.querySelector(".all-section")?.addEventListener("click", e => {
+    const target = e.target as HTMLElement;
+    if (target.dataset.clicked === "true") {
+        target.dataset.clicked = "false";
+        document.querySelector<HTMLElement>(".project-container[data-id='-1'")?.remove();
+        return;
     }
-    console.log(combinedProject);
+    target.dataset.clicked = "true";
+    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
+    const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string));
+
+    const projectContainer = document.createElement("div");
+    projectContainer.classList.add("project-container");
+    projectContainer.dataset.id = "-1";
+    projectContainer.dataset.name = "All";
+
+    const heading = document.createElement("h2");
+    heading.classList.add("project-header-main");
+    const headingSpan = document.createElement("span");
+    headingSpan.classList.add("project-header-text");
+    headingSpan.textContent = "All";
+    heading.append(headingSpan);
+    const list = document.createElement("ul");
+    list.classList.add("project-task-list");
+
+    for (let project of projectInfos) {
+        project = project as Project;
+        for (let task of project?.getTasks()) {
+            const taskElem = createTask(task.name, task.date, task.priority, project.getTitle(), task.id);
+            list.append(taskElem);
+        }
+    }
+    projectContainer.append(heading, list);
+    mainProjectContainer?.append(projectContainer);
 });
+

@@ -33,6 +33,10 @@
     width: 100%;
 }
 
+.project-container {
+    margin-bottom: 4px;
+}
+
 .project-container > :not(:first-child) {
     margin-left: 0.5rem;
 }
