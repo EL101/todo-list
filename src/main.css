@@ -58,7 +58,7 @@
     align-items: center;
     gap: 4px;
     background-color: var(--main-surface);
-    padding: 2px 8px;
+    padding: 2px 8px 6px 8px;
     border-radius: 5px;
     transition: background-color 0.3s;
 }
