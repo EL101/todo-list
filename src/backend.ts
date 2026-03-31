@@ -38,7 +38,9 @@ export class Project {
     public getTitle() {
         return this.title;
     }
-
+    public setTitle(t: string) {
+        this.title = t;
+    }
     public getNextID() {
         return this.nextID;
     }

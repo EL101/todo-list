@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, sub } from "date-fns";
 import { Priority, Task } from "./types";
 import { priorityToStr, strToPriority, Project} from "./backend";
 
@@ -21,6 +21,9 @@ const projects_section = document.querySelector(".projects-section");
 const add_projects_btn = document.querySelector(".add-projects");
 const mainProjectContainer = document.querySelector(".main-project-container");
 
+export function getSVGElement(svg: string) {
+    return parser.parseFromString(svg, "image/svg+xml").documentElement;
+}
 // ── Sidebar ──────────────────────────────────────────────
 sidebar_collapse_button?.addEventListener("click", () => {
     sidebar?.classList.toggle("collapsed");
@@ -90,13 +93,13 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
         nameField.name = "taskName";
         nameField.autocomplete = "off";
         // nameField.autocomplete = "new-password";
-        nameField.classList.add("task-name-input", "task-input-field");
+        nameField.classList.add("task-name-input", "main-input-field");
 
         const tagInputContainer = document.createElement("div");
         tagInputContainer.classList.add("tag-input-container");
 
         const datePicker = document.createElement("input");
-        datePicker.classList.add("date-picker", "task-input-field");
+        datePicker.classList.add("date-picker", "main-input-field");
         datePicker.type = "datetime-local";
         datePicker.required = true;
         datePicker.name = "date";
@@ -104,7 +107,7 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
 
         const priorityPicker = document.createElement("select");
         priorityPicker.required = true;
-        priorityPicker.classList.add("priority-picker", "task-input-field");
+        priorityPicker.classList.add("priority-picker", "main-input-field");
         for (const op of ["", "Low", "Medium", "High"]) {
             const option = document.createElement("option");
             option.value = op;
@@ -176,7 +179,7 @@ export function createTask(name: string, date: string, priority: Priority, proje
     tags.append(dateTag, priorityTag, projectTag);
     labelTagContainer.append(btnLabelContainer, tags);
 
-    const editBtn = parser.parseFromString(editSVG, "image/svg+xml").documentElement;
+    const editBtn = getSVGElement(editSVG);
     editBtn.classList.add("edit-btn");
 
     taskElem.append(labelTagContainer, editBtn);
@@ -217,6 +220,46 @@ export function getProjectHeader(id: string) {
     return headers.filter(header => header.dataset.id === id)[0];
 }
 
+export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
+    btn.addEventListener("click", () => {
+        const projectContainer = btn.closest(".project-container") as HTMLElement;
+        const projectHeaderMain = btn.closest(".project-header-main") as HTMLElement;
+        const headerText = projectHeaderMain?.firstChild as HTMLElement;
+        const originalName = headerText?.textContent;
+        const inputField = document.createElement("input");
+        inputField.classList.add("main-header-input-field");
+        inputField.placeholder = "Project Name";
+        inputField.defaultValue = headerText?.textContent ? headerText?.textContent : "";
+        inputField.addEventListener("keypress", e => {
+            if (e.key !== "Enter") return;
+            submitNewHeaderBtn.click();
+        });
+        headerText?.remove();
+
+        const submitNewHeaderBtn = document.createElement("button");
+        submitNewHeaderBtn.classList.add("edit-header-submit-btn");
+        submitNewHeaderBtn.textContent = "Enter";
+        submitNewHeaderBtn.addEventListener("click", () => {
+            const newName = inputField.value === "" ? originalName : inputField.value;
+            headerText.textContent = newName;
+            submitNewHeaderBtn.remove();
+            inputField.remove();
+            const ID = projectHeaderMain.closest<HTMLElement>(".project-container")!.dataset.id;
+            const sidebarHeader = getProjectHeader(ID as string);
+            const originalInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
+            originalInfo?.setTitle(newName);
+            sidebarHeader.dataset.projectInfo = JSON.stringify(originalInfo);
+            sidebarHeader.querySelector("label")!.textContent = newName;
+            projectContainer.querySelectorAll(".project-tag").forEach(tag => tag.textContent = newName);
+            projectContainer.dataset.name = newName;
+            projectHeaderMain?.append(headerText, btn);
+        });
+        projectHeaderMain?.prepend(inputField, submitNewHeaderBtn);
+        inputField.focus();
+        btn.remove();
+    });
+}
+
 // ── Render project ───────────────────────────────────────
 export function addProject(projectInfo: Project, id: string) {
     const projectContainer = document.createElement("div");
@@ -226,8 +269,13 @@ export function addProject(projectInfo: Project, id: string) {
 
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
-    heading.textContent = projectInfo.getTitle();
-
+    const headingSpan = document.createElement("span");
+    headingSpan.classList.add("project-header-text");
+    headingSpan.textContent = projectInfo.getTitle();
+    const editHeading = getSVGElement(editSVG);
+    editHeading.classList.add("edit-btn");
+    setEditBtnHeadingEventListeners(editHeading);
+    heading.append(headingSpan, editHeading);
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
 
@@ -279,7 +327,11 @@ function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
         const projHeaderContainer = document.querySelector(".projects-container");
         const addProjectsBtn = document.querySelector(".add-projects") as HTMLElement;
         const form = document.querySelector<HTMLFormElement>(".project-header-input-form");
-        if (!form?.reportValidity()) return;
+        if (!form?.reportValidity()) {
+            form?.remove();
+            addProjectsBtn.dataset.canceled = "true";
+            return;
+        }
         addProjectsBtn.dataset.canceled = "true";
         const formData = new FormData(form);
         const projName = formData.get("name");
@@ -297,21 +349,36 @@ function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
         checkbox.id = "checkbox" + newID;
         checkbox.name = "checkbox" + newID;
         setProjHeaderCheckboxEventListeners(checkbox);
+        // checkbox.addEventListener("click", () => {
+        //     if (!checkbox.checked) {
+        //         Array.from(mainProjectContainer?.children ?? [])
+        //             .filter(elem => elem instanceof HTMLElement && elem.dataset.id === "" + newID)
+        //             .forEach(elem => mainProjectContainer?.removeChild(elem));
+        //     } else {
+        //         const raw = newProjHeader.dataset.projectInfo;
+        //         const id = newProjHeader.dataset.id;
+        //         const projectInfo = raw ? Project.parse(raw) : null;
+        //         if (projectInfo && id) addProject(projectInfo, id);
+        //     }
+        // });
 
         const label = document.createElement("label");
         label.htmlFor = "checkbox" + newID;
         label.textContent = projName as string;
 
-        const trash = parser.parseFromString(deleteProjectSVG, "image/svg+xml").documentElement;
+        const trash = getSVGElement(deleteProjectSVG);
         trash.classList.add("delete-project");
         setDeleteProjectEventListeners(trash);
+        // trash.addEventListener("click", () => {
+        //     if (checkbox.checked) checkbox.click();
+        //     newProjHeader?.remove();
+        // });
 
         newProjHeader.append(checkbox, label, trash);
         
         projHeaderContainer?.prepend(newProjHeader);
     });
 }
-
 function setProjHeaderCheckboxEventListeners(btn: HTMLInputElement) {
     btn.addEventListener("click", () => {
         if (!btn.checked) {
