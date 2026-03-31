@@ -17,6 +17,7 @@
 .main {
     width: 100%;
     padding: 1rem 2rem;
+    min-width: 0;
 }
 
 .title {
@@ -38,6 +39,9 @@
     font-size: 1rem;
     padding-bottom: 4px;
     border-bottom: 1px solid var(--main-border-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .project-task-list {
@@ -243,6 +247,7 @@
 
 .task-name-input::placeholder {
     color: var(--main-text-muted);
+    transition: opacity 0.2s;
 }
 
 .task-name-input:focus::placeholder {

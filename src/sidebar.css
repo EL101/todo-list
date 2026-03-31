@@ -12,6 +12,7 @@
 .sidebar {
     height: 100%;
     width: clamp(200px, 30vw, 300px);
+    min-width: 0;
     display: flex;
     flex-direction: column;
     padding: 1rem;
@@ -217,5 +218,56 @@
 
 .project-task-header label {
     cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
+
+.project-header-input-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.project-header-input-field {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--sidebar-border);
+    padding: 2px 4px;
+    color: var(--sidebar-text-secondary);
+    transition: border-bottom 0.2s;
+}
+
+.project-header-input-field:focus {
+    outline: none;
+    border-bottom-color: var(--sidebar-text-secondary);
+}
+
+.project-header-input-field::placeholder {
+    color: var(--sidebar-muted);
+    transition: opacity 0.2s;
+}
+
+.project-header-input-field:focus::placeholder {
+    opacity: 0.5;
+}
+
+.project-header-submit-btn {
+    background: transparent;
+    border: 1px solid var(--sidebar-border);
+    color: var(--sidebar-muted);
+    padding: 2px 4px;
+    cursor: pointer;
+    opacity: 0.8;
+    font-size: 0.8rem;
+    width: 30%;
+    align-self: center;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.project-header-submit-btn:hover {
+    background-color: var(--sidebar-highlight);
+    color: var(--sidebar-text-primary);
+    border-color: var(--sidebar-text-primary);
+}
