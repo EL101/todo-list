@@ -110,10 +110,16 @@
     color: var(--main-text-secondary);
     border-radius: 15px;
     padding: 2px 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 .sort-selector:focus {
     outline: none;
+}
+
+.sort-selector:hover {
+    background-color: var(--main-surface-hover);
 }
 
 .project-task-list {

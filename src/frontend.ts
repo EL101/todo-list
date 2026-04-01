@@ -30,6 +30,8 @@ sidebar_collapse_button?.addEventListener("click", () => {
 });
 
 document.querySelector(".projects-header")?.addEventListener("click", () => {
+    allSection.dataset.clicked = "false";
+    todaySection.dataset.clicked = "false";
     const projectsSection = document.querySelector(".projects-section");
     projectsSection?.classList.toggle("collapsed");
     if (!projectsSection?.classList.contains("collapsed")) {
@@ -50,7 +52,7 @@ document.querySelector(".projects-header")?.addEventListener("click", () => {
     const addProjectsBtn = document.querySelector<HTMLElement>(".add-projects") as HTMLElement;
     addProjectsBtn.dataset.canceled = "true";
     document.querySelector(".project-header-input-form")?.remove();
-
+    populateStorage();
 });
 
 add_projects_btn?.addEventListener("click", e => e.stopPropagation());
@@ -83,6 +85,7 @@ export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
         proj?.removeTask(taskID);
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
         document.querySelectorAll(`.project-task[data-id='${fullID}']`).forEach(x => x.remove());
+        populateStorage();
     });
 }
 
@@ -324,6 +327,7 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         const editable = containerID !== "-1" && containerID !== "-2";
         projectContainer?.replaceWith(createProject(proj, containerID, editable, proj.getSortOrder()));
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
+        populateStorage();
     });
 }
 
@@ -374,6 +378,7 @@ export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
             });
             projectContainer.dataset.name = newName;
             projectHeaderMain?.append(headerText, btn);
+            populateStorage();
         });
         projectHeaderMain?.prepend(inputField, submitNewHeaderBtn);
         inputField.focus();
@@ -464,6 +469,7 @@ export function createProject(projectInfo: Project, id: string, editable=true, s
 export function addProject(projectInfo: Project, id: string, editable=true) {
     const projectContainer = createProject(projectInfo, id, editable, projectInfo.getSortOrder());
     mainProjectContainer?.append(projectContainer);
+    populateStorage();
 }
 
 // ── Sidebar project checkboxes ───────────────────────────
@@ -483,12 +489,36 @@ function setDeleteProjectEventListeners(elem: HTMLElement) {
         for (let task of projectInfo.getTasks()) {
             document.querySelectorAll<HTMLElement>(`.project-task[data-id='${task.id}']`).forEach(elem => elem.remove());
         }
+        populateStorage();
     });
 }
+
+function addProjectHeader(projName: string, projInfo: string, id: number) {
+    const projHeaderContainer = document.querySelector(".projects-container");
+    const newProjHeader = document.createElement("div");
+    newProjHeader.classList.add("project-task-header");
+    newProjHeader.dataset.projectInfo = projInfo;
+    newProjHeader.dataset.id = "" + id;
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.id = "checkbox" + id;
+    checkbox.name = "checkbox" + id;
+    setProjHeaderCheckboxEventListeners(checkbox);
+    const label = document.createElement("label");
+    label.htmlFor = "checkbox" + id;
+    label.textContent = projName as string;
+
+    const trash = getSVGElement(deleteProjectSVG);
+    trash.classList.add("delete-project");
+    setDeleteProjectEventListeners(trash);
+    newProjHeader.append(checkbox, label, trash);
+        
+    projHeaderContainer?.prepend(newProjHeader);
+}
+
 function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
     btn.addEventListener("click", e => {
         e.preventDefault();
-        const projHeaderContainer = document.querySelector(".projects-container");
         const addProjectsBtn = document.querySelector(".add-projects") as HTMLElement;
         const form = document.querySelector<HTMLFormElement>(".project-header-input-form");
         if (!form?.reportValidity()) {
@@ -498,52 +528,17 @@ function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
         }
         addProjectsBtn.dataset.canceled = "true";
         const formData = new FormData(form);
-        const projName = formData.get("name");
+        const projName = formData.get("name") as string;
         const allHeaders = document.querySelectorAll<HTMLElement>(".project-task-header");
         const newID = allHeaders.length > 0 ? Math.max(...Array.from(allHeaders).map(header => parseInt(header.dataset.id as string))) + 1 : 0;
 
         const projInfo = new Project(projName as string, [], newID);
         form?.remove();
-        const newProjHeader = document.createElement("div");
-        newProjHeader.classList.add("project-task-header");
-        newProjHeader.dataset.projectInfo = JSON.stringify(projInfo);
-        newProjHeader.dataset.id = "" + newID;
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.id = "checkbox" + newID;
-        checkbox.name = "checkbox" + newID;
-        setProjHeaderCheckboxEventListeners(checkbox);
-        // checkbox.addEventListener("click", () => {
-        //     if (!checkbox.checked) {
-        //         Array.from(mainProjectContainer?.children ?? [])
-        //             .filter(elem => elem instanceof HTMLElement && elem.dataset.id === "" + newID)
-        //             .forEach(elem => mainProjectContainer?.removeChild(elem));
-        //     } else {
-        //         const raw = newProjHeader.dataset.projectInfo;
-        //         const id = newProjHeader.dataset.id;
-        //         const projectInfo = raw ? Project.parse(raw) : null;
-        //         if (projectInfo && id) addProject(projectInfo, id);
-        //     }
-        // });
-
-        const label = document.createElement("label");
-        label.htmlFor = "checkbox" + newID;
-        label.textContent = projName as string;
-
-        const trash = getSVGElement(deleteProjectSVG);
-        trash.classList.add("delete-project");
-        setDeleteProjectEventListeners(trash);
-        // trash.addEventListener("click", () => {
-        //     if (checkbox.checked) checkbox.click();
-        //     newProjHeader?.remove();
-        // });
-
-        newProjHeader.append(checkbox, label, trash);
-        
-        projHeaderContainer?.prepend(newProjHeader);
+        addProjectHeader(projName, JSON.stringify(projInfo), newID);
+        populateStorage();
     });
 }
+
 function setProjHeaderCheckboxEventListeners(btn: HTMLInputElement) {
     btn.addEventListener("click", () => {
         if (!btn.checked) {
@@ -558,7 +553,8 @@ function setProjHeaderCheckboxEventListeners(btn: HTMLInputElement) {
             const projectInfo = raw ? Project.parse(raw) : null;
             if (projectInfo && id) addProject(projectInfo, id);
         }
-    })
+        populateStorage();
+    });
 }
 document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("click", e => {
     const btn = document.querySelector<HTMLButtonElement>(".add-projects") as HTMLButtonElement;
@@ -591,7 +587,7 @@ function createDefaultProject() {
     document.querySelector<HTMLButtonElement>(".add-projects")?.click();
     document.querySelector<HTMLInputElement>(".project-header-input-field")!.value="My Projects";
     document.querySelector<HTMLInputElement>(".project-header-submit-btn")?.click();
-
+    populateStorage();
 }
 
 function getSpecificProjectInfo(filter: (t: Task) => boolean, title: string) {
@@ -636,10 +632,75 @@ function allTodayEventListener(section: string) {
 }
 allSection?.addEventListener("click", () => {
     allTodayEventListener("All");
+    populateStorage();
 });
 
 todaySection?.addEventListener("click", () => {
     allTodayEventListener("Today");
+    populateStorage();
 });
 
-createDefaultProject();
+function populateStorage() {
+    const projects = JSON.stringify(
+        Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"))
+        .map(elem => elem.dataset.projectInfo as string));
+    localStorage.setItem("projects", projects);
+    const selectedProjects = JSON.stringify(
+        Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"))
+        .filter(elem => elem.querySelector<HTMLInputElement>("input")?.checked)
+        .map(elem => elem.dataset.id));
+    localStorage.setItem("selectedProjects", selectedProjects);
+    const selectedTab = 
+        allSection.dataset.clicked === "true" ? "All" :
+        todaySection.dataset.clicked === "true" ? "Today" :
+        "Projects"
+    localStorage.setItem("selectedTab", selectedTab);
+}
+
+function storageAvailable(type: "localStorage" | "sessionStorage") {
+  let storage;
+  try {
+    storage = window[type];
+    const x = "__storage_test__";
+    storage.setItem(x, x);
+    storage.removeItem(x);
+    return true;
+  } catch (e) {
+    return (
+      e instanceof DOMException &&
+      e.name === "QuotaExceededError" &&
+      // acknowledge QuotaExceededError only if there's something already stored
+      storage &&
+      storage.length !== 0
+    );
+  }
+}
+
+function setup() {
+    if (!storageAvailable("localStorage") || localStorage.length === 0) {
+        createDefaultProject();
+    } else {
+        const projects = JSON.parse(localStorage.projects);
+        console.log(projects);
+        const selectedProjects = JSON.parse(localStorage.selectedProjects);
+        const selectedTab = localStorage.selectedTab;
+        for (const p of [...projects].reverse()) {
+            const project = Project.parse(p) as Project;
+            addProjectHeader(project.getTitle(), JSON.stringify(project), project.getProjectID());
+        }
+        for (const id of selectedProjects) {
+            document.querySelector<HTMLElement>(`.project-task-header[data-id='${id}']`)
+                ?.querySelector("input")?.click();
+        }
+        switch (selectedTab) {
+            case "All":
+                allSection.click();
+                break;
+            case "Today":
+                todaySection.click();
+                break;
+        }
+    }
+}
+
+setup();

@@ -40,6 +40,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--sidebar-border);
+    transition: background-color 0.2s;
 }
 
 .sidebar-collapse-button > svg, .collapse-projects-indicator > svg {
@@ -50,15 +51,6 @@
 .sidebar-collapse-button > svg path, .collapse-projects-indicator > svg path  {
     stroke: var(--sidebar-muted);
     fill: var(--sidebar-muted);
-}
-
-.sidebar.collapsed .sidebar-collapse-button > svg path, .sidebar.collapsed .collapse-projects-indicator > svg path {
-    /* stroke: black;
-    fill: black; */
-}
-
-.sidebar.collapsed .sidebar-collapse-button {
-    /* border-color: black; */
 }
 
 .sidebar-collapse-button:hover {
@@ -88,6 +80,7 @@
     border-radius: 10px;
     cursor: pointer;
     color: var(--sidebar-text-primary);
+    transition: background-color 0.2s;
 }
 
 .sidebar-section:hover {
@@ -127,6 +120,7 @@
     border: none;
     color: var(--sidebar-muted);
     font-size: 1.5rem;
+    transition: background-color 0.2s;
 }
 
 .add-projects:hover {
