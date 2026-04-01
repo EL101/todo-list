@@ -300,7 +300,9 @@ export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
             originalInfo?.setTitle(newName);
             sidebarHeader.dataset.projectInfo = JSON.stringify(originalInfo);
             sidebarHeader.querySelector("label")!.textContent = newName;
-            projectContainer.querySelectorAll(".project-tag").forEach(tag => tag.textContent = newName);
+            projectContainer.querySelectorAll<HTMLElement>(".project-task").forEach(task => {
+                document.querySelectorAll(`.project-task[data-id='${task.dataset.id}'] .project-tag`).forEach(elem => elem.textContent = newName);
+            });
             projectContainer.dataset.name = newName;
             projectHeaderMain?.append(headerText, btn);
         });
@@ -372,10 +374,14 @@ document.querySelectorAll<HTMLElement>(".delete-project").forEach(elem => {
 });
 function setDeleteProjectEventListeners(elem: HTMLElement) {
     elem.addEventListener("click", () => {
-        const projHeader = elem.closest(".project-task-header");
+        const projHeader = elem.closest<HTMLElement>(".project-task-header");
         const checkbox = projHeader?.querySelector("input") as HTMLInputElement;
         if (checkbox.checked) checkbox.click();
         projHeader?.remove();
+        const projectInfo = Project.parse(projHeader?.dataset.projectInfo as string) as Project;
+        for (let task of projectInfo.getTasks()) {
+            document.querySelectorAll<HTMLElement>(`.project-task[data-id='${task.id}']`).forEach(elem => elem.remove());
+        }
     });
 }
 function setProjHeaderSubmitBtnEventListeners(btn: HTMLButtonElement) {
@@ -462,6 +468,7 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
     const projHeaderContainer = document.querySelector(".projects-container");
     const projHeaderInput = document.createElement("form");
     projHeaderInput.classList.add("project-header-input-form");
+    projHeaderInput.autocomplete = "off";
     const textField = document.createElement("input");
     textField.classList.add("project-header-input-field");
     textField.type = "text";
