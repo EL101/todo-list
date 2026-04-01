@@ -16,10 +16,10 @@ const deleteProjectSVG = `
 const parser = new DOMParser();
 const sidebar = document.querySelector(".sidebar");
 const sidebar_collapse_button = document.querySelector(".sidebar-collapse-button");
-const projects_header = document.querySelector(".projects-header");
-const projects_section = document.querySelector(".projects-section");
 const add_projects_btn = document.querySelector(".add-projects");
 const mainProjectContainer = document.querySelector(".main-project-container");
+const allSection = document.querySelector(".all-section") as HTMLElement;
+const todaySection = document.querySelector(".today-section") as HTMLElement;
 
 export function getSVGElement(svg: string) {
     return parser.parseFromString(svg, "image/svg+xml").documentElement;
@@ -29,8 +29,24 @@ sidebar_collapse_button?.addEventListener("click", () => {
     sidebar?.classList.toggle("collapsed");
 });
 
-projects_header?.addEventListener("click", () => {
-    projects_section?.classList.toggle("collapsed");
+document.querySelector(".projects-header")?.addEventListener("click", () => {
+    const projectsSection = document.querySelector(".projects-section");
+    projectsSection?.classList.toggle("collapsed");
+    if (!projectsSection?.classList.contains("collapsed")) {
+        allSection.dataset.clicked = "false";
+        todaySection.dataset.clicked = "false";
+
+        document.querySelectorAll(".project-container[data-id='-1']").forEach(elem => elem.remove());
+        document.querySelectorAll(".project-container[data-id='-2']").forEach(elem => elem.remove());
+
+        if (document.querySelectorAll(".project-container").length === 0) {
+            document.querySelectorAll<HTMLInputElement>("input[type='checkbox']").forEach(elem => {
+                if (elem.checked) {
+                    elem.dispatchEvent(new Event("click"));
+                }
+            });
+        }
+    }
     const addProjectsBtn = document.querySelector<HTMLElement>(".add-projects") as HTMLElement;
     addProjectsBtn.dataset.canceled = "true";
     document.querySelector(".project-header-input-form")?.remove();
@@ -561,27 +577,31 @@ function addProjectsAllToday(projectInfos: Project[], id: string, title: string)
     mainProjectContainer?.append(projectContainer);
 }
 
-document.querySelector(".all-section")?.addEventListener("click", e => {
-    const target = e.target as HTMLElement;
-    if (target.dataset.clicked === "true") {
-        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1'")?.forEach(elem => elem.remove());
-        target.dataset.clicked = "false";
+allSection?.addEventListener("click", () => {
+    if (allSection.dataset.clicked === "true") {
+        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1']")?.forEach(elem => elem.remove());
+        allSection.dataset.clicked = "false";
         return;
     }
-    target.dataset.clicked = "true";
+    allSection.dataset.clicked = "true";
+    todaySection.dataset.clicked = "false";
+    document.querySelectorAll(".project-container").forEach(elem => elem.remove());
+    document.querySelector(".projects-section")?.classList.add("collapsed");
     const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
     const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string));
     addProjectsAllToday(projectInfos as Project[], "-1", "All");
 });
 
-document.querySelector(".today-section")?.addEventListener("click", e => {
-    const target = e.target as HTMLElement;
-    if (target.dataset.clicked === "true") {
-        document.querySelectorAll<HTMLElement>(".project-container[data-id='-2'")?.forEach(elem => elem.remove());
-        target.dataset.clicked = "false";
+todaySection?.addEventListener("click", () => {
+    if (todaySection.dataset.clicked === "true") {
+        document.querySelectorAll<HTMLElement>(".project-container[data-id='-2']")?.forEach(elem => elem.remove());
+        todaySection.dataset.clicked = "false";
         return;
     }
-    target.dataset.clicked = "true";
+    todaySection.dataset.clicked = "true";
+    allSection.dataset.clicked = "false";
+    document.querySelectorAll(".project-container").forEach(elem => elem.remove());
+    document.querySelector(".projects-section")?.classList.add("collapsed");
     const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
     const projectInfos = [];
     for (let project of projects) {
