@@ -392,6 +392,24 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
     } else {
         heading.append(headingSpan);
     }
+    
+    const sortFilterContainer = document.createElement("div");
+    sortFilterContainer.classList.add("sort-filter-container");
+    const sortSelector = document.createElement("select");
+    sortSelector.classList.add("sort-selector");
+    const options = ["", "Date", "Priority"];
+    for (let option of options) {
+        const optionElem = document.createElement("option");
+        optionElem.value = option;
+        optionElem.textContent = "Sort By: " + option;
+        if (option === "") optionElem.selected = true;
+        sortSelector.append(optionElem);
+    }
+    sortSelector.addEventListener("change", () => {
+        
+    });
+    sortFilterContainer.append(sortSelector);
+
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
 
@@ -418,9 +436,9 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
         addTaskButtonLabel.addEventListener("click", () => addTaskButton.click());
 
         addTaskContainer.append(addTaskButton, addTaskButtonLabel);
-        projectContainer.append(heading, list, addTaskContainer);
+        projectContainer.append(heading, sortFilterContainer, list, addTaskContainer);
     } else {
-        projectContainer.append(heading, list);
+        projectContainer.append(heading, sortFilterContainer, list);
     }
     mainProjectContainer?.append(projectContainer);
 }
