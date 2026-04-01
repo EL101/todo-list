@@ -250,6 +250,19 @@ export function createTask(name: string, description: string, date: string, prio
     } else {
         taskElem.append(labelTagContainer);
     }
+    taskElem.addEventListener("click", () => {
+        console.log("yo");
+        taskElem.classList.toggle("expanded");
+        if (!taskElem.classList.contains("expanded")) {
+            taskElem.querySelector(".task-description")?.remove();
+            return;
+        }
+        const descriptionElem = document.createElement("div");
+        descriptionElem.classList.add("task-description");
+        descriptionElem.textContent = description;
+        btnLabelContainer.after(descriptionElem);
+    });
+
     return taskElem;
 }
 
@@ -515,8 +528,8 @@ function createDefaultProject() {
 document.querySelector(".all-section")?.addEventListener("click", e => {
     const target = e.target as HTMLElement;
     if (target.dataset.clicked === "true") {
+        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1'")?.forEach(elem => elem.remove());
         target.dataset.clicked = "false";
-        document.querySelector<HTMLElement>(".project-container[data-id='-1'")?.remove();
         return;
     }
     target.dataset.clicked = "true";

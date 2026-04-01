@@ -111,8 +111,10 @@
     background-color: var(--main-surface);
     padding: 2px 8px 6px 8px;
     border-radius: 5px;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, height 0.3s;
     position: relative;
+    cursor: pointer;
+    gap: 4px;
 }
 
 .project-task:hover {
@@ -143,6 +145,10 @@
     flex-direction: column;
     gap: 4px;
     align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
 }
 
 .btn-label-container {
@@ -157,9 +163,25 @@
     gap: 8px;
     padding-left: calc(12px + 4px);
 }
+
 .task-label {
     cursor: pointer;
     transition: color 0.2s ease;
+}
+
+.task-description {
+    align-self: stretch;
+    margin-left: calc(12px + 4px);
+    border: 1px solid var(--main-text-muted);
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    font-size: 0.8rem;
+    color: var(--main-text-muted);
+    padding: 2px 4px;
+    border-radius: 5px;
+    max-height: calc(8.3 * 0.8rem);
+    overflow-y: auto;
 }
 
 .task-complete-btn {
@@ -336,6 +358,7 @@
 .task-description-input {
     resize: none;
     max-height: 7rem;
+    padding-bottom: 2px;;
 }
 
 .tag-input-container {
