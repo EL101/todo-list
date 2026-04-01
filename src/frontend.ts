@@ -39,6 +39,14 @@ projects_header?.addEventListener("click", () => {
 
 add_projects_btn?.addEventListener("click", e => e.stopPropagation());
 
+export function exitAllEditing() {
+    document.querySelectorAll<HTMLButtonElement>(".cancel-task-btn").forEach(b => b.click());
+    document.querySelectorAll<HTMLButtonElement>(".edit-header-submit-btn").forEach(b => {
+        b.value = "";
+        b.click();
+    });
+        
+}
 // ── Task buttons ─────────────────────────────────────────
 export function setTaskCompleteBtnEventListeners(btn: HTMLButtonElement) {
     btn.addEventListener("mouseenter", () => {
@@ -82,7 +90,7 @@ export function setDatePickerEventListeners(datePicker: HTMLInputElement) {
     });
 }
 
-export function createTaskInputForm(container?: HTMLElement, btn?: HTMLButtonElement, name?: string, date?: string, priority?: string) {
+export function createTaskInputForm(container?: HTMLElement, btn?: HTMLButtonElement, name?: string, description?: string, date?: string, priority?: string) {
     const inputForm = document.createElement("form");
     inputForm.classList.add("task-input-form");
 
@@ -93,9 +101,18 @@ export function createTaskInputForm(container?: HTMLElement, btn?: HTMLButtonEle
     nameField.name = "taskName";
     nameField.autocomplete = "off";
     nameField.defaultValue = name ? name : "";
-    // nameField.autocomplete = "new-password";
     nameField.classList.add("task-name-input", "main-input-field");
 
+    const descriptionField = document.createElement("textarea");
+    descriptionField.classList.add("task-description-input", "main-input-field");
+    descriptionField.placeholder = "Task Description";
+    descriptionField.name = "description";
+    // console.log(description);
+    descriptionField.defaultValue = description ? description : "";
+    descriptionField.addEventListener("input", () => {
+        descriptionField.style.height = "auto";
+        descriptionField.style.height = descriptionField.scrollHeight + "px";
+    })
     const tagInputContainer = document.createElement("div");
     tagInputContainer.classList.add("tag-input-container");
 
@@ -143,7 +160,7 @@ export function createTaskInputForm(container?: HTMLElement, btn?: HTMLButtonEle
         });
     }
     btnContainer.append(submitTaskBtn, cancelButton);
-    inputForm.append(nameField, tagInputContainer, btnContainer);
+    inputForm.append(nameField, descriptionField, tagInputContainer, btnContainer);
     return inputForm;
 }
 
@@ -151,12 +168,13 @@ export function setAddTaskEventListeners(btn: HTMLButtonElement, container: HTML
     btn.addEventListener("click", () => {
         if (btn.dataset.canceled === "false") return;
         btn.dataset.canceled = "false";
+        exitAllEditing();
         const inputForm = createTaskInputForm(container, btn);
         container.insertBefore(inputForm, elemAfter);
     });
 }
 
-export function createTask(name: string, date: string, priority: Priority, project: string, id: string, editable=true) {
+export function createTask(name: string, description: string, date: string, priority: Priority, project: string, id: string, editable=true) {
     const taskElem = document.createElement("li");
     taskElem.classList.add("project-task");
     taskElem.dataset.id = id;
@@ -198,7 +216,9 @@ export function createTask(name: string, date: string, priority: Priority, proje
         const editBtn = getSVGElement(editSVG);
         editBtn.classList.add("edit-btn");
         editBtn.addEventListener("click", () => {
-            const inputForm = createTaskInputForm(undefined, undefined, name, date, priorityToStr(priority));
+            exitAllEditing();
+            
+            const inputForm = createTaskInputForm(undefined, undefined, name, description, date, priorityToStr(priority));
             taskElem.replaceWith(inputForm);
 
             inputForm.querySelector(".cancel-task-btn")?.addEventListener("click", () => {
@@ -210,21 +230,20 @@ export function createTask(name: string, date: string, priority: Priority, proje
                 if (!inputForm.reportValidity()) return;
                 const data = new FormData(inputForm);
                 const newName = data.get("taskName") as string;
+                const newDescription = data.get("description") as string;
                 const newDate = data.get("date") as string;
                 const newPriority = strToPriority(data.get("priority") as string);
-                const newTaskElem = createTask(newName, newDate, newPriority, project, id);
+                const newTaskElem = createTask(newName, newDescription, newDate, newPriority, project, id);
                 const projID = id.split("-")[0];
                 const sidebarHeader = getProjectHeader(projID as string);
                 const projInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
 
-                const newTaskObj = {name: newName, date: newDate, priority: newPriority, id} as Task;
+                const newTaskObj = {name: newName, description: newDescription, date: newDate, priority: newPriority, id} as Task;
                 projInfo?.updateTask(id, newTaskObj);
-                console.log(projInfo);
                 sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
                 inputForm.replaceWith(newTaskElem);
 
-                // const uneditableNewTaskElem = createTask(newName, newDate, newPriority, project, id, false);
-                document.querySelectorAll(`.project-task[data-id='${id}']`).forEach(elem => elem.replaceWith(createTask(newName, newDate, newPriority, project, id)));
+                document.querySelectorAll(`.project-task[data-id='${id}']`).forEach(elem => elem.replaceWith(createTask(newName, newDescription, newDate, newPriority, project, id)));
             });
         });
         taskElem.append(labelTagContainer, editBtn);
@@ -245,21 +264,22 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         if (container.dataset.name) projectName = container.dataset.name;
         const formData = new FormData(form);
         const taskName = formData.get("taskName") as string;
+        const description = formData.get("description") as string;
+        console.log(description);
         const date = formData.get("date") as string;
         const priority = strToPriority(formData.get("priority") as string);
 
         const projectHeader = getProjectHeader(container.dataset.id as string);
         const proj = Project.parse(projectHeader.dataset.projectInfo as string);
         const nextID = proj?.getNextID() as string
-        const taskElem = createTask(taskName, date, priority, projectName, nextID);
+        const taskElem = createTask(taskName, description, date, priority, projectName, nextID);
         
-        proj?.addTask(taskName, date, priority);
+        proj?.addTask(taskName, description, date, priority);
 
         form.remove();
 
         projectList?.append(taskElem);
-        // const uneditableTaskElem = createTask(taskName, date, priority, projectName, nextID, false);
-        document.querySelector(".project-container[data-id='-1'] .project-task-list")?.append(createTask(taskName, date, priority, projectName, nextID));
+        document.querySelector(".project-container[data-id='-1'] .project-task-list")?.append(createTask(taskName, description, date, priority, projectName, nextID));
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
     });
 }
@@ -272,6 +292,8 @@ export function getProjectHeader(id: string) {
 
 export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
     btn.addEventListener("click", () => {
+        exitAllEditing();
+
         const projectContainer = btn.closest(".project-container") as HTMLElement;
         const projectHeaderMain = btn.closest(".project-header-main") as HTMLElement;
         const headerText = projectHeaderMain?.firstChild as HTMLElement;
@@ -337,7 +359,7 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
 
     for (let i = 0; i < projectInfo.getTasks().length; i++) {
         const task = projectInfo.getTasks()[i];
-        const taskElem = createTask(task.name, task.date, task.priority, projectInfo.getTitle(), task.id);
+        const taskElem = createTask(task.name, task.description, task.date, task.priority, projectInfo.getTitle(), task.id);
         list.append(taskElem);
     }
     if (editable) {
@@ -484,6 +506,12 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
     projHeaderContainer?.prepend(projHeaderInput);
 });
 
+function createDefaultProject() {
+    document.querySelector<HTMLButtonElement>(".add-projects")?.click();
+    document.querySelector<HTMLInputElement>(".project-header-input-field")!.value="My Projects";
+    document.querySelector<HTMLInputElement>(".project-header-submit-btn")?.click();
+
+}
 document.querySelector(".all-section")?.addEventListener("click", e => {
     const target = e.target as HTMLElement;
     if (target.dataset.clicked === "true") {
@@ -512,7 +540,7 @@ document.querySelector(".all-section")?.addEventListener("click", e => {
     for (let project of projectInfos) {
         project = project as Project;
         for (let task of project?.getTasks()) {
-            const taskElem = createTask(task.name, task.date, task.priority, project.getTitle(), task.id);
+            const taskElem = createTask(task.name, task.description, task.date, task.priority, project.getTitle(), task.id);
             list.append(taskElem);
         }
     }
@@ -520,3 +548,5 @@ document.querySelector(".all-section")?.addEventListener("click", e => {
     mainProjectContainer?.append(projectContainer);
 });
 
+
+createDefaultProject();

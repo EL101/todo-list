@@ -34,7 +34,7 @@
 }
 
 .project-container {
-    margin-bottom: 4px;
+    margin-bottom: 1rem;
 }
 
 .project-container > :not(:first-child) {
@@ -312,6 +312,7 @@
     color: var(--main-text-secondary);
     padding: 1px 4px;
     transition: border-bottom 0.2s;
+    font-family: inherit;
 }
 
 .main-input-field:focus {
@@ -323,15 +324,19 @@
     border-bottom-color: var(--main-border-surface-strong);
 }
 
-.task-name-input::placeholder {
+.main-input-field::placeholder {
     color: var(--main-text-muted);
     transition: opacity 0.2s;
 }
 
-.task-name-input:focus::placeholder {
+.main-input-field:focus::placeholder {
     opacity: 0.5;
 }
 
+.task-description-input {
+    resize: none;
+    max-height: 7rem;
+}
 
 .tag-input-container {
     display: flex;

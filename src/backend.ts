@@ -24,9 +24,8 @@ export class Project {
         this.nextTaskID = tasks.length > 0 ? Math.max(...tasks.map(task => parseInt(task.id.split('-')[1]))) + 1 : 0;
     }
 
-    public addTask(name: string, date: string, priority: Priority) {
-
-        this.tasks.push({name, date, priority, id: this.projectID + "-" + this.nextTaskID});
+    public addTask(name: string, description: string, date: string, priority: Priority) {
+        this.tasks.push({name, date, priority, description, id: this.projectID + "-" + this.nextTaskID});
         this.nextTaskID++;
     }
 
