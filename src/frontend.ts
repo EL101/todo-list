@@ -1,4 +1,4 @@
-import { format, isToday } from "date-fns";
+import { format, isToday, compareAsc } from "date-fns";
 import { Priority, Task } from "./types";
 import { priorityToStr, strToPriority, Project} from "./backend";
 
@@ -244,28 +244,30 @@ export function createTask(name: string, description: string, date: string, prio
             inputForm.querySelector(".submit-task-btn")?.addEventListener("click", e => {
                 e.preventDefault();
                 if (!inputForm.reportValidity()) return;
+                const projectContainer = inputForm.closest(".project-container") as HTMLElement;
                 const data = new FormData(inputForm);
                 const newName = data.get("taskName") as string;
                 const newDescription = data.get("description") as string;
                 const newDate = data.get("date") as string;
                 const newPriority = strToPriority(data.get("priority") as string);
-                const newTaskElem = createTask(newName, newDescription, newDate, newPriority, project, id);
+                const containerID = projectContainer?.dataset.id;
                 const projID = id.split("-")[0];
                 const sidebarHeader = getProjectHeader(projID as string);
                 const projInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
-
-                const newTaskObj = {name: newName, description: newDescription, date: newDate, priority: newPriority, id} as Task;
+                const newTaskObj = {name: newName, description: newDescription, date: newDate, project: projInfo?.getTitle(), priority: newPriority, id} as Task;
                 projInfo?.updateTask(id, newTaskObj);
                 sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
-                inputForm.replaceWith(newTaskElem);
-                if (isToday(new Date(newDate))) {
-                    if (!document.querySelector(`.project-container[data-id='-2'] .project-task[data-id='${id}`)) {
-                        document.querySelector(".project-container[data-id='-2'] .project-task-list")?.append(createTask(newName, newDescription, newDate, newPriority, project, id));
-                    }
-                } else {
-                    document.querySelector(`.project-container[data-id='-2'] .project-task[data-id='${id}`)?.remove();
+                if (containerID !== "-1" && containerID !== "-2") {
+                    
+                    projectContainer?.replaceWith(createProject(projInfo as Project, projID, editable, projInfo?.getSortOrder()));
+                } else if (containerID === "-1") {
+                    const allProjInfo = getAllProjectInfo();
+                    const newTaskObj = {name: newName, description: newDescription, date: newDate, project: allProjInfo?.getTitle(), priority: newPriority, id} as Task;
+                    allProjInfo?.updateTask(id, newTaskObj);
+                    const sortOrder = document.querySelector<HTMLSelectElement>(".sort-selector")?.value;
+                    allProjInfo.setSortOrder(sortOrder as string);
+                    projectContainer?.replaceWith(createProject(allProjInfo as Project, containerID, editable, allProjInfo?.getSortOrder()));
                 }
-                document.querySelectorAll(`.project-task[data-id='${id}']`).forEach(elem => elem.replaceWith(createTask(newName, newDescription, newDate, newPriority, project, id)));
             });
         });
         taskElem.append(labelTagContainer, editBtn);
@@ -293,7 +295,8 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         e.preventDefault();
         if (!form.reportValidity()) return;
         addTaskBtn.dataset.canceled = "true";
-        const projectList = container.querySelector(".project-task-list");
+        const projectContainer = container.closest(".project-container") as HTMLElement;
+        const containerID = projectContainer.dataset.id as string;
 
         let projectName = "New Project";
         if (container.dataset.name) projectName = container.dataset.name;
@@ -305,19 +308,14 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
         const priority = strToPriority(formData.get("priority") as string);
 
         const projectHeader = getProjectHeader(container.dataset.id as string);
-        const proj = Project.parse(projectHeader.dataset.projectInfo as string);
+        const proj = Project.parse(projectHeader.dataset.projectInfo as string) as Project;
         const nextID = proj?.getNextID() as string
-        const taskElem = createTask(taskName, description, date, priority, projectName, nextID);
         
         proj?.addTask(taskName, description, date, priority);
-
         form.remove();
 
-        projectList?.append(taskElem);
-        document.querySelector(".project-container[data-id='-1'] .project-task-list")?.append(createTask(taskName, description, date, priority, projectName, nextID));
-        if (isToday(new Date(date))) {
-            document.querySelector(".project-container[data-id='-2'] .project-task-list")?.append(createTask(taskName, description, date, priority, projectName, nextID));
-        }
+        const editable = containerID !== "-1" && containerID !== "-2";
+        projectContainer?.replaceWith(createProject(proj, containerID, editable, proj.getSortOrder()));
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
     });
 }
@@ -356,8 +354,12 @@ export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
             inputField.remove();
             const ID = projectHeaderMain.closest<HTMLElement>(".project-container")!.dataset.id;
             const sidebarHeader = getProjectHeader(ID as string);
-            const originalInfo = Project.parse(sidebarHeader.dataset.projectInfo as string);
+            const originalInfo = Project.parse(sidebarHeader.dataset.projectInfo as string) as Project;
             originalInfo?.setTitle(newName);
+            for (let task of originalInfo.getTasks()) {
+                task.project = newName;
+                originalInfo.updateTask(task.id, task);
+            }
             sidebarHeader.dataset.projectInfo = JSON.stringify(originalInfo);
             sidebarHeader.querySelector("label")!.textContent = newName;
             projectContainer.querySelectorAll<HTMLElement>(".project-task").forEach(task => {
@@ -372,8 +374,7 @@ export function setEditBtnHeadingEventListeners(btn: HTMLElement) {
     });
 }
 
-// ── Render project ───────────────────────────────────────
-export function addProject(projectInfo: Project, id: string, editable=true) {
+export function createProject(projectInfo: Project, id: string, editable=true, sortOption="") {
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
     projectContainer.dataset.id = id;
@@ -402,11 +403,21 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
         const optionElem = document.createElement("option");
         optionElem.value = option;
         optionElem.textContent = "Sort By: " + option;
-        if (option === "") optionElem.selected = true;
+        if (option === sortOption) optionElem.selected = true;
         sortSelector.append(optionElem);
     }
     sortSelector.addEventListener("change", () => {
-        
+        let currProjectInfo;
+        if (projectInfo.getProjectID() !== -1 && projectInfo.getProjectID() !== -2) {
+            const projHeader = document.querySelector<HTMLElement>(`.project-task-header[data-id='${projectInfo.getProjectID()}']`);
+            currProjectInfo = Project.parse(projHeader?.dataset.projectInfo as string) as Project;
+            currProjectInfo.setSortOrder(sortSelector.value);
+            projHeader!.dataset.projectInfo = JSON.stringify(currProjectInfo);
+        } else {
+            currProjectInfo = projectInfo;
+            currProjectInfo.setSortOrder(sortSelector.value);
+        }
+        projectContainer.replaceWith(createProject(currProjectInfo, id, editable, sortSelector.value));
     });
     sortFilterContainer.append(sortSelector);
 
@@ -415,7 +426,7 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
 
     for (let i = 0; i < projectInfo.getTasks().length; i++) {
         const task = projectInfo.getTasks()[i];
-        const taskElem = createTask(task.name, task.description, task.date, task.priority, projectInfo.getTitle(), task.id);
+        const taskElem = createTask(task.name, task.description, task.date, task.priority, task.project, task.id);
         list.append(taskElem);
     }
     if (editable) {
@@ -440,6 +451,11 @@ export function addProject(projectInfo: Project, id: string, editable=true) {
     } else {
         projectContainer.append(heading, sortFilterContainer, list);
     }
+    return projectContainer;
+}
+// ── Render project ───────────────────────────────────────
+export function addProject(projectInfo: Project, id: string, editable=true) {
+    const projectContainer = createProject(projectInfo, id, editable, projectInfo.getSortOrder());
     mainProjectContainer?.append(projectContainer);
 }
 
@@ -569,30 +585,13 @@ function createDefaultProject() {
 
 }
 
-function addProjectsAllToday(projectInfos: Project[], id: string, title: string) {
-    const projectContainer = document.createElement("div");
-    projectContainer.classList.add("project-container");
-    projectContainer.dataset.id = id;
-    projectContainer.dataset.name = title;
-
-    const heading = document.createElement("h2");
-    heading.classList.add("project-header-main");
-    const headingSpan = document.createElement("span");
-    headingSpan.classList.add("project-header-text");
-    headingSpan.textContent = title;
-    heading.append(headingSpan);
-    const list = document.createElement("ul");
-    list.classList.add("project-task-list");
-
-    for (let project of projectInfos) {
-        project = project as Project;
-        for (let task of project?.getTasks()) {
-            const taskElem = createTask(task.name, task.description, task.date, task.priority, project.getTitle(), task.id);
-            list.append(taskElem);
-        }
-    }
-    projectContainer.append(heading, list);
-    mainProjectContainer?.append(projectContainer);
+function getAllProjectInfo() {
+    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
+    const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string)) as Project[];
+    const combinedTasks = [];
+    for (let project of projectInfos) combinedTasks.push(...project?.getTasks());
+    const combinedProjectInfos = new Project("All", combinedTasks, -1);
+    return combinedProjectInfos;
 }
 
 allSection?.addEventListener("click", () => {
@@ -605,9 +604,7 @@ allSection?.addEventListener("click", () => {
     todaySection.dataset.clicked = "false";
     document.querySelectorAll(".project-container").forEach(elem => elem.remove());
     document.querySelector(".projects-section")?.classList.add("collapsed");
-    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
-    const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string));
-    addProjectsAllToday(projectInfos as Project[], "-1", "All");
+    addProject(getAllProjectInfo(), "-1", false);
 });
 
 todaySection?.addEventListener("click", () => {
@@ -627,7 +624,6 @@ todaySection?.addEventListener("click", () => {
         const filteredTasks = info.getTasks().filter(task => isToday(new Date(task.date)));
         projectInfos.push(new Project(info.getTitle(), filteredTasks, info.getProjectID()));
     }
-    addProjectsAllToday(projectInfos as Project[], "-2", "Today");
 });
 
 createDefaultProject();
