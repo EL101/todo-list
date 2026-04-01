@@ -262,11 +262,18 @@ export function createTask(name: string, description: string, date: string, prio
                     projectContainer?.replaceWith(createProject(projInfo as Project, projID, editable, projInfo?.getSortOrder()));
                 } else if (containerID === "-1") {
                     const allProjInfo = getAllProjectInfo();
-                    const newTaskObj = {name: newName, description: newDescription, date: newDate, project: allProjInfo?.getTitle(), priority: newPriority, id} as Task;
+                    const newTaskObj = {name: newName, description: newDescription, date: newDate, project, priority: newPriority, id} as Task;
                     allProjInfo?.updateTask(id, newTaskObj);
                     const sortOrder = document.querySelector<HTMLSelectElement>(".sort-selector")?.value;
                     allProjInfo.setSortOrder(sortOrder as string);
                     projectContainer?.replaceWith(createProject(allProjInfo as Project, containerID, editable, allProjInfo?.getSortOrder()));
+                } else {
+                    const todayProjInfo = getTodayProjectInfo();
+                    const newTaskObj = {name: newName, description: newDescription, date: newDate, project, priority: newPriority, id} as Task;
+                    todayProjInfo?.updateTask(id, newTaskObj);
+                    const sortOrder = document.querySelector<HTMLSelectElement>(".sort-selector")?.value;
+                    todayProjInfo.setSortOrder(sortOrder as string);
+                    projectContainer?.replaceWith(createProject(todayProjInfo as Project, containerID, editable, todayProjInfo?.getSortOrder()));
                 }
             });
         });
@@ -558,7 +565,9 @@ document.querySelector<HTMLButtonElement>(".add-projects")?.addEventListener("cl
     if (btn?.dataset.canceled === "false") return;
     btn.dataset.canceled = "false";
     const projectsSection = document.querySelector<HTMLElement>(".projects-section");
-    projectsSection?.classList.remove("collapsed");
+    if (projectsSection?.classList.contains("collapsed")) {
+        document.querySelector<HTMLElement>(".projects-header")?.click();
+    }
     const projHeaderContainer = document.querySelector(".projects-container");
     const projHeaderInput = document.createElement("form");
     projHeaderInput.classList.add("project-header-input-form");
@@ -585,45 +594,52 @@ function createDefaultProject() {
 
 }
 
-function getAllProjectInfo() {
+function getSpecificProjectInfo(filter: (t: Task) => boolean, title: string) {
     const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
     const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string)) as Project[];
     const combinedTasks = [];
-    for (let project of projectInfos) combinedTasks.push(...project?.getTasks());
-    const combinedProjectInfos = new Project("All", combinedTasks, -1);
+    for (let project of projectInfos) {
+        for (let task of project.getTasks()) {
+            if (filter(task)) combinedTasks.push(task);
+        }
+    }
+    const combinedProjectInfos = new Project(title, combinedTasks, -1);
     return combinedProjectInfos;
 }
 
-allSection?.addEventListener("click", () => {
-    if (allSection.dataset.clicked === "true") {
-        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1']")?.forEach(elem => elem.remove());
-        allSection.dataset.clicked = "false";
+function getAllProjectInfo() {
+    return getSpecificProjectInfo((t: Task) => true, "All");
+}
+function getTodayProjectInfo() {
+    return getSpecificProjectInfo((t: Task) => isToday(t.date), "Today");
+}
+
+function allTodayEventListener(section: string) {
+    let a = allSection;
+    let b = todaySection;
+    let id="-1";
+    if (section === "Today") {
+        b = allSection;
+        a = todaySection;
+        id="-2";
+    }
+    document.querySelectorAll(".project-container").forEach(elem => elem.remove());
+    if (a.dataset.clicked === "true") {
+        a.dataset.clicked = "false";
         return;
     }
-    allSection.dataset.clicked = "true";
-    todaySection.dataset.clicked = "false";
-    document.querySelectorAll(".project-container").forEach(elem => elem.remove());
+    a.dataset.clicked = "true";
+    b.dataset.clicked = "false";
     document.querySelector(".projects-section")?.classList.add("collapsed");
-    addProject(getAllProjectInfo(), "-1", false);
+    if (section === "All") addProject(getAllProjectInfo(), id, false);
+    else if (section === "Today") addProject(getTodayProjectInfo(), id, false);
+}
+allSection?.addEventListener("click", () => {
+    allTodayEventListener("All");
 });
 
 todaySection?.addEventListener("click", () => {
-    if (todaySection.dataset.clicked === "true") {
-        document.querySelectorAll<HTMLElement>(".project-container[data-id='-2']")?.forEach(elem => elem.remove());
-        todaySection.dataset.clicked = "false";
-        return;
-    }
-    todaySection.dataset.clicked = "true";
-    allSection.dataset.clicked = "false";
-    document.querySelectorAll(".project-container").forEach(elem => elem.remove());
-    document.querySelector(".projects-section")?.classList.add("collapsed");
-    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
-    const projectInfos = [];
-    for (let project of projects) {
-        const info = Project.parse(project.dataset.projectInfo as string) as Project;
-        const filteredTasks = info.getTasks().filter(task => isToday(new Date(task.date)));
-        projectInfos.push(new Project(info.getTitle(), filteredTasks, info.getProjectID()));
-    }
+    allTodayEventListener("Today");
 });
 
 createDefaultProject();
