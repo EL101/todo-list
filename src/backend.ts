@@ -46,7 +46,9 @@ export class Project {
     public getNextID() {
         return this.projectID + "-" + this.nextTaskID;
     }
-
+    public getProjectID() {
+        return this.projectID;
+    }
     public updateTask(id: string, newTask: Task) {
         for (let i = 0; i < this.tasks.length; i++) {
             const task = this.tasks[i];

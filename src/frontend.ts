@@ -1,4 +1,4 @@
-import { format, parse } from "date-fns";
+import { format, isToday } from "date-fns";
 import { Priority, Task } from "./types";
 import { priorityToStr, strToPriority, Project} from "./backend";
 
@@ -242,7 +242,13 @@ export function createTask(name: string, description: string, date: string, prio
                 projInfo?.updateTask(id, newTaskObj);
                 sidebarHeader.dataset.projectInfo = JSON.stringify(projInfo);
                 inputForm.replaceWith(newTaskElem);
-
+                if (isToday(new Date(newDate))) {
+                    if (!document.querySelector(`.project-container[data-id='-2'] .project-task[data-id='${id}`)) {
+                        document.querySelector(".project-container[data-id='-2'] .project-task-list")?.append(createTask(newName, newDescription, newDate, newPriority, project, id));
+                    }
+                } else {
+                    document.querySelector(`.project-container[data-id='-2'] .project-task[data-id='${id}`)?.remove();
+                }
                 document.querySelectorAll(`.project-task[data-id='${id}']`).forEach(elem => elem.replaceWith(createTask(newName, newDescription, newDate, newPriority, project, id)));
             });
         });
@@ -293,6 +299,9 @@ export function setSubmitTaskEventListeners(btn: HTMLButtonElement, form: HTMLFo
 
         projectList?.append(taskElem);
         document.querySelector(".project-container[data-id='-1'] .project-task-list")?.append(createTask(taskName, description, date, priority, projectName, nextID));
+        if (isToday(new Date(date))) {
+            document.querySelector(".project-container[data-id='-2'] .project-task-list")?.append(createTask(taskName, description, date, priority, projectName, nextID));
+        }
         projectHeader.dataset.projectInfo = JSON.stringify(proj);
     });
 }
@@ -525,27 +534,18 @@ function createDefaultProject() {
     document.querySelector<HTMLInputElement>(".project-header-submit-btn")?.click();
 
 }
-document.querySelector(".all-section")?.addEventListener("click", e => {
-    const target = e.target as HTMLElement;
-    if (target.dataset.clicked === "true") {
-        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1'")?.forEach(elem => elem.remove());
-        target.dataset.clicked = "false";
-        return;
-    }
-    target.dataset.clicked = "true";
-    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
-    const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string));
 
+function addProjectsAllToday(projectInfos: Project[], id: string, title: string) {
     const projectContainer = document.createElement("div");
     projectContainer.classList.add("project-container");
-    projectContainer.dataset.id = "-1";
-    projectContainer.dataset.name = "All";
+    projectContainer.dataset.id = id;
+    projectContainer.dataset.name = title;
 
     const heading = document.createElement("h2");
     heading.classList.add("project-header-main");
     const headingSpan = document.createElement("span");
     headingSpan.classList.add("project-header-text");
-    headingSpan.textContent = "All";
+    headingSpan.textContent = title;
     heading.append(headingSpan);
     const list = document.createElement("ul");
     list.classList.add("project-task-list");
@@ -559,7 +559,37 @@ document.querySelector(".all-section")?.addEventListener("click", e => {
     }
     projectContainer.append(heading, list);
     mainProjectContainer?.append(projectContainer);
+}
+
+document.querySelector(".all-section")?.addEventListener("click", e => {
+    const target = e.target as HTMLElement;
+    if (target.dataset.clicked === "true") {
+        document.querySelectorAll<HTMLElement>(".project-container[data-id='-1'")?.forEach(elem => elem.remove());
+        target.dataset.clicked = "false";
+        return;
+    }
+    target.dataset.clicked = "true";
+    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
+    const projectInfos = projects.map(project => Project.parse(project.dataset.projectInfo as string));
+    addProjectsAllToday(projectInfos as Project[], "-1", "All");
 });
 
+document.querySelector(".today-section")?.addEventListener("click", e => {
+    const target = e.target as HTMLElement;
+    if (target.dataset.clicked === "true") {
+        document.querySelectorAll<HTMLElement>(".project-container[data-id='-2'")?.forEach(elem => elem.remove());
+        target.dataset.clicked = "false";
+        return;
+    }
+    target.dataset.clicked = "true";
+    const projects = Array.from(document.querySelectorAll<HTMLElement>(".project-task-header"));
+    const projectInfos = [];
+    for (let project of projects) {
+        const info = Project.parse(project.dataset.projectInfo as string) as Project;
+        const filteredTasks = info.getTasks().filter(task => isToday(new Date(task.date)));
+        projectInfos.push(new Project(info.getTitle(), filteredTasks, info.getProjectID()));
+    }
+    addProjectsAllToday(projectInfos as Project[], "-2", "Today");
+});
 
 createDefaultProject();
